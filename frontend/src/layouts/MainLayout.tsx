@@ -36,6 +36,13 @@ export default function MainLayout() {
                   navigate("/login");
                 },
               },
+              {
+                key: "bookings",
+                label: "Booking List",
+                onClick: () => {
+                  navigate("/bookings")
+                }
+              },
             ]}
           />
         </div>

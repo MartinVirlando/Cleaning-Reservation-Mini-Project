@@ -43,6 +43,14 @@ export default function ServiceDetail() {
           </Descriptions>
         </div>
       </Card>
+      <Button
+      type="primary"
+      className="w-full mt-4"
+      onClick={() => navigate(`/services/${id}/book`)}>
+        Book Now
+      </Button>
+
     </div>
+    
   );
 }

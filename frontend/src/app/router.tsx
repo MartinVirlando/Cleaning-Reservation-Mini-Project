@@ -6,6 +6,8 @@ import ServiceDetail from "../pages/services/ServiceDetail";
 import ProtectedRoute from "../routes/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
+import BookingCreate from "../pages/bookings/BookingCreate"
+import Bookings from "../pages/bookings/Bookings";
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +21,8 @@ export const router = createBrowserRouter([
           { index: true, element: <ServicesPage /> },
           { path: "services", element: <ServicesPage /> },
           { path: "services/:id", element: <ServiceDetail /> },
+          { path: "services/:id/book", element: <BookingCreate/>},
+          { path: "bookings", element: <Bookings/>}
         ],
       },
     ],

@@ -1,18 +1,11 @@
-export type LoginPayload = {
-  email: string;
-  password: string;
-};
+import type {
+  LoginRequest,
+  LoginResponse,
+} from "../contracts/auth.contract";
 
-export type LoginResponse = {
-  token: string;
-  user: {
-    email: string;
-  };
-};
-
-export const login = async (
-  payload: LoginPayload
-): Promise<LoginResponse> => {
+export async function login(
+  payload: LoginRequest
+): Promise<LoginResponse> {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       if (
@@ -21,11 +14,14 @@ export const login = async (
       ) {
         resolve({
           token: "fake-jwt-token",
-          user: { email: payload.email },
+          user: {
+            id: "user-1",
+            email: payload.email,
+          },
         });
       } else {
-        reject(new Error("Invalid email or password"));
+        reject(new Error("INVALID_CREDENTIALS"));
       }
     }, 1000);
   });
-};
+}

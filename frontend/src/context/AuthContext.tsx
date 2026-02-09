@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // AUTO LOAD AUTH ON FIRST LOAD
+ 
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
 
