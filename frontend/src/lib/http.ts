@@ -1,38 +1,37 @@
+let authToken: string | null = null;
+let onUnauthorized: (() => void) | null = null;
 
-const API_BASE_URL = "http://localhost:8080"; 
+export function setAuthToken(token: string | null) {
+  authToken = token;
+}
 
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
-
-type RequestOptions = {
-  method?: HttpMethod;
-  body?: unknown;
-  token?: string | null;
-};
+export function setUnauthorizedHandler(handler : () => void){
+  onUnauthorized = handler;
+}
 
 export async function http<T>(
   url: string,
-  options: RequestOptions = {}
+  options: RequestInit = {}
 ): Promise<T> {
-  const { method = "GET", body, token } = options;
-
-  const res = await fetch(`${API_BASE_URL}${url}`, {
-    method,
+  const res = await fetch(`http://localhost:8080${url}`, {
+    ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(authToken ? {Authorization: `Bearer ${authToken}`}: {}),
+      ...(options.headers || {}),
     },
-    body: body ? JSON.stringify(body) : undefined,
   });
 
-  if (!res.ok) {
-    let error;
-    try {
-      error = await res.json();
-    } catch {
-      throw new Error("Unexpected server error");
-    }
-    throw error;
+  if(res.status === 401) {
+    onUnauthorized?.(); 
+    throw new Error("Unauthorized");
   }
 
+  if(!res.ok){
+    const error = await res.json().catch(() => ({
+      message: "Unexpected Error",
+    }));
+    throw error;
+  }
   return res.json();
 }

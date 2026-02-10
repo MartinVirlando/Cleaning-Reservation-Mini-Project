@@ -8,31 +8,38 @@ import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import BookingCreate from "../pages/bookings/BookingCreate"
 import Bookings from "../pages/bookings/Bookings";
+import AuthProviderLayout from "../layouts/AuthProviderLayout";
+
 
 export const router = createBrowserRouter([
   {
-    path: "/",
-    element: <ProtectedRoute />,
-    errorElement: <div>Page not found</div>,
+    element: <AuthProviderLayout />,
     children: [
+   
       {
-        element: <MainLayout />,
+        element: <AuthLayout />,
         children: [
-          { index: true, element: <ServicesPage /> },
-          { path: "services", element: <ServicesPage /> },
-          { path: "services/:id", element: <ServiceDetail /> },
-          { path: "services/:id/book", element: <BookingCreate/>},
-          { path: "bookings", element: <Bookings/>}
+          { path: "login", element: <LoginPage /> },
+          { path: "register", element: <RegisterPage /> },
         ],
       },
-    ],
-  },
 
-  {
-    element: <AuthLayout />,
-    children: [
-      { path: "/login", element: <LoginPage /> },
-      { path: "/register", element: <RegisterPage /> },
+    
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <MainLayout />,
+            children: [
+              { index: true, element: <ServicesPage /> },
+              { path: "services", element: <ServicesPage /> },
+              { path: "services/:id", element: <ServiceDetail /> },
+              { path: "services/:id/book", element: <BookingCreate /> },
+              { path: "bookings", element: <Bookings /> },
+            ],
+          },
+        ],
+      },
     ],
   },
 ]);

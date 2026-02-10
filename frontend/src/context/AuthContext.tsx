@@ -1,11 +1,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { setAuthToken, setUnauthorizedHandler } from "../lib/http";
+
 
 type User = {
   email: string;
 };
 
-type AuthContextType = {
+type AuthContextType = {  
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
@@ -22,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
  
   useEffect(() => {
@@ -40,6 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
+useEffect (() => {
+  setAuthToken(token);
+  setUnauthorizedHandler(() => {
+    logout();
+    navigate(`/login`);
+  });
+}, [token])
+
   const login = (user: User, token: string) => {
     setUser(user);
     setToken(token);
@@ -52,6 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     );
   };
+
+ 
 
   const logout = () => {
     setUser(null);
@@ -74,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+
 
 export function useAuth() {
   const context = useContext(AuthContext);

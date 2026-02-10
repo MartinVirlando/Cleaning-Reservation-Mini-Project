@@ -30,7 +30,7 @@ export default function Bookings() {
 }
 
 
-  if (!data || data.length === 0) {
+  if (!data || data.bookings.length === 0) {
         return (
         <div>
             <Button onClick={() => navigate("/services")}>Back</Button>
@@ -49,7 +49,7 @@ export default function Bookings() {
         <h1 className="text-xl font-semibold">My Bookings</h1>
         
         <Button onClick={() => navigate("/services")}>Back</Button>
-        {data.map((b) => (
+        {data.bookings.map((b) => (
             <Card key={b.id} >
                 <div className="space-y-2">
                     <p>

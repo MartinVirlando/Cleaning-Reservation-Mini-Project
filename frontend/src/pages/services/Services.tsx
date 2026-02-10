@@ -19,7 +19,7 @@ export default function Services() {
   }
 
   return (
-    <div>
+    <div className="pt-2">
       <h1 className="text-xl font-bold mb-4">Services</h1>
 
       <List
