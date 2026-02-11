@@ -2,6 +2,9 @@ import { Button } from "../atoms/Buttons";
 import { Form } from "antd";
 import FormInput from "../molecules/FormInput";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
+import { message } from "antd";
+
 
 
 type RegisterFormValues = {
@@ -16,10 +19,21 @@ export default function RegisterForm() {
     const [form] = Form.useForm();
     const navigate = useNavigate();
 
-    const onFinish = (values: RegisterFormValues) => {
-        console.log("Form values:", values);
-        navigate("/login");
-    }
+    const onFinish = async (values: RegisterFormValues) => {
+  try {
+    await api.post("/auth/register", {
+      username: values.username,
+      email: values.email,
+      password: values.password,
+    });
+
+    message.success("Register success!");
+    navigate("/login");
+  } catch (err) {
+    message.error("Register failed");
+  }
+};
+
 
     return(
        
