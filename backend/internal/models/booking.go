@@ -11,9 +11,10 @@ type Booking struct {
 	ServiceID uint
 	Service   Service
 
-	Date   string `gorm:"size:20"`
-	Time   string `gorm:"size:20"`
-	Status string `gorm:"size:20"`
+	Date    string `gorm:"size:20"`
+	Time    string `gorm:"size:20"`
+	Status  string `gorm:"size:20"`
+	Address string `gorm:"size:255"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

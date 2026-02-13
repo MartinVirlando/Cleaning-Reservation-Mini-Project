@@ -17,18 +17,20 @@ export default function MainLayout() {
           </div>
 
           <Menu
-            theme="dark"
+            className="bg-blue-900"
             mode="horizontal"
             selectable={false}
             items={[
               {
                 key: "services",
                 label: "Services",
+                style: { color: "white" },
                 onClick: () => navigate("/services"),
               },
               {
                 key: "logout",
                 label: "Logout",
+                style: { color: "white" },
                 onClick: () => {
                   logout();
                   navigate("/login");
@@ -37,6 +39,7 @@ export default function MainLayout() {
               {
                 key: "bookings",
                 label: "Booking List",
+                style: { color: "white" },
                 onClick: () => {
                   navigate("/bookings")
                 }

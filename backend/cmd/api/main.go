@@ -8,6 +8,8 @@ import (
 	"backend/internal/database"
 	"backend/internal/handlers"
 	"backend/internal/middleware"
+	"backend/internal/repositories"
+	"backend/internal/services"
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
@@ -44,13 +46,20 @@ func main() {
 	authHandler := handlers.NewAuthHandler(db)
 	userHandler := handlers.NewUserHandler()
 
+	serviceRepo := repositories.NewServiceRepository(db)
+	serviceService := services.NewServiceService(serviceRepo)
+	serviceHandler := handlers.NewServiceHandler(serviceService)
+
+	bookingRepo := repositories.NewBookingRepository(db)
+
+	bookingService := services.NewBookingService(bookingRepo, serviceRepo)
+	bookingHandler := handlers.NewBookingHandler(bookingService)
+	adminHandler := handlers.NewAdminHandler(bookingService)
+
+	// PUBLIC ROUTES (NO JWT)
+
 	e.POST("/auth/register", authHandler.Register)
 	e.POST("/auth/login", authHandler.Login)
-
-	api := e.Group("/api")
-	api.Use(middleware.JWTMiddleware)
-
-	api.GET("/profile", userHandler.Profile)
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{
@@ -58,6 +67,25 @@ func main() {
 			"port":   cfg.AppPort,
 		})
 	})
+
+	// SERVICES PUBLIC
+	e.GET("/api/services", serviceHandler.GetAll)
+	e.GET("/api/services/:id", serviceHandler.GetByID)
+
+	// PROTECTED ROUTES (JWT)
+	api := e.Group("/api")
+	api.Use(middleware.JWTMiddleware)
+
+	api.GET("/profile", userHandler.Profile)
+	api.POST("/bookings", bookingHandler.Create)
+	api.GET("/bookings", bookingHandler.MyBookings)
+
+	// ADMIN ROUTES
+	admin := api.Group("/admin")
+	admin.Use(middleware.AdminOnly)
+
+	admin.PUT("/bookings/:id/approve", adminHandler.Approve)
+	admin.PUT("/bookings/:id/reject", adminHandler.Reject)
 
 	log.Printf("Server running at: http://localhost:%s\n", cfg.AppPort)
 	e.Logger.Fatal(e.Start(":" + cfg.AppPort))

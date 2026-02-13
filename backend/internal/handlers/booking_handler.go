@@ -18,14 +18,22 @@ func NewBookingHandler(service services.BookingService) *BookingHandler {
 }
 
 type CreateBookingRequest struct {
-	ServiceID uint   `json:"service_id"`
+	ServiceID uint   `json:"serviceId"`
 	Date      string `json:"date"`
 	Time      string `json:"time"`
+	Address   string `json:"address"`
 }
 
 func (h *BookingHandler) Create(c echo.Context) error {
 
-	userID := c.Get("user_id").(float64)
+	userIDFloat, ok := c.Get("user_id").(float64)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{
+			"message": "Unauthorized",
+		})
+	}
+
+	userID := uint(userIDFloat)
 
 	var req CreateBookingRequest
 
@@ -35,11 +43,18 @@ func (h *BookingHandler) Create(c echo.Context) error {
 		})
 	}
 
+	if req.ServiceID == 0 || req.Date == "" || req.Time == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"message": "service_id, date, time are required",
+		})
+	}
+
 	err := h.service.CreateBooking(
 		uint(userID),
 		req.ServiceID,
 		req.Date,
 		req.Time,
+		req.Address,
 	)
 
 	if err != nil {
@@ -54,14 +69,19 @@ func (h *BookingHandler) Create(c echo.Context) error {
 }
 
 func (h *BookingHandler) MyBookings(c echo.Context) error {
+	userIDFloat, ok := c.Get("user_id").(float64)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{
+			"message": "Unauthorized",
+		})
+	}
+	userID := uint(userIDFloat)
 
-	userID := c.Get("user_id").(float64)
-
-	bookings, err := h.service.GetMyBookings(uint(userID))
-
+	bookings, err := h.service.GetMyBookings(userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"message": "Failed get bookings",
+			"error":   err.Error(),
 		})
 	}
 

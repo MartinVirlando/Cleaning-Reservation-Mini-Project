@@ -1,45 +1,46 @@
-import { createBrowserRouter } from "react-router-dom";
-import LoginPage from "../pages/auth/Login";
-import RegisterPage from "../pages/auth/Register";
-import ServicesPage from "../pages/services/Services";
-import ServiceDetail from "../pages/services/ServiceDetail";
+import { Routes, Route, Navigate } from "react-router-dom";
+
+import ServicesPage from "../pages/services/ServicesPage";
+import ServiceDetailPage from "../pages/services/ServiceDetailPage";
+import BookingsPage from "../pages/bookings/BookingsPage";
+
+import Login from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
+
 import ProtectedRoute from "../routes/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
-import BookingCreate from "../pages/bookings/BookingCreate"
-import Bookings from "../pages/bookings/Bookings";
-import AuthProviderLayout from "../layouts/AuthProviderLayout";
 
+export default function AppRouter() {
+  return (
+    <Routes>
+      {/* DEFAULT */}
+      <Route element={<MainLayout/>}>
+        <Route path="/" element={<Navigate to="/services" replace />} />
+      </Route>
+      
 
-export const router = createBrowserRouter([
-  {
-    element: <AuthProviderLayout />,
-    children: [
-   
-      {
-        element: <AuthLayout />,
-        children: [
-          { path: "login", element: <LoginPage /> },
-          { path: "register", element: <RegisterPage /> },
-        ],
-      },
+      {/* PUBLIC */}
+      <Route element={<MainLayout/>}>
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/services/:id" element={<ServiceDetailPage />} />
+      </Route>
+      
 
-    
-      {
-        element: <ProtectedRoute />,
-        children: [
-          {
-            element: <MainLayout />,
-            children: [
-              { index: true, element: <ServicesPage /> },
-              { path: "services", element: <ServicesPage /> },
-              { path: "services/:id", element: <ServiceDetail /> },
-              { path: "services/:id/book", element: <BookingCreate /> },
-              { path: "bookings", element: <Bookings /> },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-]);
+      {/* AUTH */}
+      <Route element={<AuthLayout/>}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
+      
+
+      {/* PROTECTED */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/bookings" element={<BookingsPage />} />
+      </Route>
+
+      {/* FALLBACK */}
+      <Route path="*" element={<Navigate to="/services" replace />} />
+    </Routes>
+  );
+}

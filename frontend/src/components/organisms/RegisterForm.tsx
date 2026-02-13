@@ -2,7 +2,7 @@ import { Button } from "../atoms/Buttons";
 import { Form } from "antd";
 import FormInput from "../molecules/FormInput";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api";
+import api from "../../lib/api";
 import { message } from "antd";
 
 

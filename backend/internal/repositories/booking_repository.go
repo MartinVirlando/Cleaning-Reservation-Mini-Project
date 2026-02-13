@@ -10,6 +10,8 @@ type BookingRepository interface {
 	Create(booking *models.Booking) error
 	FindByUserID(userID uint) ([]models.Booking, error)
 	FindByID(id uint) (*models.Booking, error)
+	UpdateStatus(id uint, status string) error
+	FindAll() ([]models.Booking, error)
 }
 
 type bookingRepository struct {
@@ -47,4 +49,17 @@ func (r *bookingRepository) FindByID(id uint) (*models.Booking, error) {
 	}
 
 	return &booking, nil
+}
+
+func (r *bookingRepository) UpdateStatus(id uint, status string) error {
+	return r.db.Model(&models.Booking{}).
+		Where("id = ?", id).
+		Update("status", status).Error
+}
+
+func (r *bookingRepository) FindAll() ([]models.Booking, error) {
+	var bookings []models.Booking
+	err := r.db.Preload("User").Preload("Service").
+		Find(&bookings).Error
+	return bookings, err
 }

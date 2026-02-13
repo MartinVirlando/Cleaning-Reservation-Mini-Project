@@ -8,7 +8,6 @@ type BookingFormValues = {
     date: dayjs.Dayjs;
     time: dayjs.Dayjs;
     address: string;
-    notes?: string;
 }
 
 export default function BookingCreate() { 
@@ -28,7 +27,6 @@ export default function BookingCreate() {
             date: values.date.format("YYYY-MM-DD"),
             time: values.time.format("HH:mm"),
             address: values.address,
-            notes: values.notes,
         };
 
         createBookingMutation.mutate(payload, {
@@ -47,7 +45,7 @@ export default function BookingCreate() {
 
     return (
         <div className="max-w-2x1 space-y-4">
-            <Button onClick={() => navigate(-1)}>Back</Button>
+            <Button onClick={() => navigate(`/Services/`)}>Back</Button>
 
             <Card title= "Create Booking" loading={isLoading}>
                 {service && (

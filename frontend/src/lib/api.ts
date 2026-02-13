@@ -7,10 +7,19 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("token");
+    const saved = localStorage.getItem("cleaning_auth");
 
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (saved && config.headers) {
+      try {
+        const parsed = JSON.parse(saved);
+        const token = parsed.token;
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch {
+        
+      }
     }
 
     return config;

@@ -58,11 +58,12 @@ func (h *AuthHandler) Register(c echo.Context) error {
 		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
+		Role:         "user",
 	}
 
 	if err := h.DB.Create(&user).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"messgae": "Failed to Create User!",
+			"message": "Failed to Create User!",
 		})
 	}
 
@@ -106,7 +107,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		})
 	}
 
-	token, err := utils.GenerateToken(user.ID, user.Email)
+	token, err := utils.GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"message": "Failed to generate token",

@@ -2,7 +2,7 @@ import { Card, List, Spin, Alert } from "antd";
 import { useServicesQuery } from "../../services/queries/useServicesQuery";
 import { useNavigate } from "react-router-dom";
 
-export default function Services() {
+export default function ServicesPage() {
   const { data, isLoading, isError } = useServicesQuery();
   const navigate = useNavigate();
 

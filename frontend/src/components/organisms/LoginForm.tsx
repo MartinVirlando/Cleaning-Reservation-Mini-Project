@@ -13,16 +13,20 @@ type LoginFormValues = {
 
 export default function LoginForm() {
   const navigate = useNavigate();
-  const { login: authLogin } = useAuth();
+  const { login } = useAuth();
 
   const mutation = useMutation({
     mutationFn: loginService,
 
     onSuccess: (data, variables) => {
-      authLogin(
-        { email: variables.email },
-        data.token
-      );
+      
+      const user = {
+        id: 0,
+        name: "",
+        email: variables.email,
+      };
+
+      login(data.token, user);
 
       message.success("Login successful!");
       navigate("/services");
