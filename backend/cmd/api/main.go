@@ -74,6 +74,7 @@ func main() {
 
 	// PROTECTED ROUTES (JWT)
 	api := e.Group("/api")
+	
 	api.Use(middleware.JWTMiddleware)
 
 	api.GET("/profile", userHandler.Profile)
@@ -82,6 +83,7 @@ func main() {
 
 	// ADMIN ROUTES
 	admin := api.Group("/admin")
+
 	admin.Use(middleware.AdminOnly)
 
 	admin.PUT("/bookings/:id/approve", adminHandler.Approve)
