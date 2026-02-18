@@ -18,19 +18,27 @@ export default function LoginForm() {
   const mutation = useMutation({
     mutationFn: loginService,
 
-    onSuccess: (data, variables) => {
-      
-      const user = {
-        id: 0,
-        name: "",
-        email: variables.email,
-      };
+      onSuccess: (data, variables) => {
+        const user = {
+          id: data.user.id,
+          name: data.user.username,
+          email: data.user.email,
+          role: data.user.role,
+        };
+        console.log("LOGIN ROLE =", data.user.role);
 
-      login(data.token, user);
+
+        login(data.token, user);
 
       message.success("Login successful!");
-      navigate("/services");
+
+      if (data.user.role === "admin") {
+        navigate("/admin/bookings");
+      } else {
+        navigate("/services");
+      }
     },
+
 
     onError: () => {
       message.error("Invalid email or password");

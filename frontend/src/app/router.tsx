@@ -6,6 +6,7 @@ import BookingsPage from "../pages/bookings/BookingsPage";
 
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
+import AdminBookingsPage from "../pages/bookings/AdminBookingsPage";
 
 import ProtectedRoute from "../routes/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
@@ -37,6 +38,7 @@ export default function AppRouter() {
       {/* PROTECTED */}
       <Route element={<ProtectedRoute />}>
         <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/admin/bookings" element={<AdminBookingsPage />} />
       </Route>
 
       {/* FALLBACK */}

@@ -1,6 +1,6 @@
 package handlers
 
-import(
+import (
 	"net/http"
 	"strconv"
 
@@ -45,4 +45,15 @@ func (h *AdminHandler) Reject(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "Booking rejected",
 	})
+}
+
+func (h *AdminHandler) GetAllBookings(c echo.Context) error {
+	bookings, err := h.bookingService.GetAllBookings()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "Failed get bookings",
+		})
+	}
+
+	return c.JSON(http.StatusOK, bookings)
 }

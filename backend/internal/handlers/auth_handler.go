@@ -121,6 +121,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 			"id":       user.ID,
 			"username": user.Username,
 			"email":    user.Email,
+			"role":     user.Role,
 		},
 	})
 

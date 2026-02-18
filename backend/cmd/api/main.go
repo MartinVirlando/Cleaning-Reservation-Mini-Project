@@ -86,6 +86,7 @@ func main() {
 
 	admin.PUT("/bookings/:id/approve", adminHandler.Approve)
 	admin.PUT("/bookings/:id/reject", adminHandler.Reject)
+	admin.GET("/bookings", adminHandler.GetAllBookings)
 
 	log.Printf("Server running at: http://localhost:%s\n", cfg.AppPort)
 	e.Logger.Fatal(e.Start(":" + cfg.AppPort))

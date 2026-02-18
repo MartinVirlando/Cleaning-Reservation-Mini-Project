@@ -1,6 +1,8 @@
 export type AuthUser = {
-    id: string;
+    id: number;
     email: string;
+    username: string;
+    role: string;
 };
 
 export type LoginRequest = {
