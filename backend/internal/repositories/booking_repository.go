@@ -30,7 +30,10 @@ func (r *bookingRepository) FindByUserID(userID uint) ([]models.Booking, error) 
 	var bookings []models.Booking
 
 	err := r.db.
-		Preload("Service").
+		Preload("Service", func(db *gorm.DB) *gorm.DB {
+			return db.Unscoped()
+		}).
+		Preload("User").
 		Where("user_id = ?", userID).
 		Find(&bookings).Error
 

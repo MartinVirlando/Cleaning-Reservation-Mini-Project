@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Service struct {
 	ID          uint   `gorm:"primaryKey"`
@@ -10,4 +14,5 @@ type Service struct {
 	Duration    int    `gorm:"not null"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }

@@ -2,7 +2,7 @@ import { Card, Spin, Alert, Empty, Tag } from "antd";
 import { useBookingsQuery } from "../../services/queries/useBookingsQuery";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/atoms/Buttons";
-
+import { WarningOutlined } from "@ant-design/icons";
 
 export default function BookingsPage() {
   const { data, isLoading, isError } = useBookingsQuery();
@@ -59,9 +59,24 @@ export default function BookingsPage() {
           >
             
             <div className="mb-4 pb-3 border-b border-gray-200">
-              <p className="text-lg font-semibold text-blue-600">
-                {booking.service?.name ?? "-"}
-              </p>
+              {booking.service?.isDeleted ? (
+                <div>
+                  <p className="text-lg font-semibold text-gray-400 line-through">
+                    {booking.service?.name ?? "Unknown Service"}
+                  </p>
+                  <Tag 
+                    icon={<WarningOutlined />} 
+                    color="warning" 
+                    className="mt-2"
+                  >
+                    Service No Longer Available
+                  </Tag>
+                </div>
+              ) : (
+                <p className="text-lg font-semibold text-blue-600">
+                  {booking.service?.name ?? "-"}
+                </p>
+              )}
             </div>
 
             

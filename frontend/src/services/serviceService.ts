@@ -6,6 +6,7 @@ export type Service = {
   description: string;
   price: number;
   durationMinutes: number;
+  isDeleted? : boolean;
 };
 
 export async function getServices(): Promise<Service[]> {
@@ -17,6 +18,7 @@ export async function getServices(): Promise<Service[]> {
     description: s.Description ?? "",
     price: s.Price,
     durationMinutes: s.Duration,
+    isDeleted: s.IsDeletedAt ? true : false,
   }));
 }
 
@@ -31,6 +33,7 @@ export async function getServiceById(id: string): Promise<Service> {
     description: s.Description ?? "",
     price: s.Price,
     durationMinutes: s.Duration,
+    isDeleted: s.IsDeletedAt ? true : false,
   };
 }
 

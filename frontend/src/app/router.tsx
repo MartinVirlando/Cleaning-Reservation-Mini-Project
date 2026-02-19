@@ -7,18 +7,31 @@ import BookingsPage from "../pages/bookings/BookingsPage";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import AdminBookingsPage from "../pages/bookings/AdminBookingsPage";
+import AadminServicesPage from "../pages/services/AdminServicesPage";
+import AdminLayout from "../layouts/AdminLayout";
 
 import ProtectedRoute from "../routes/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
+import { useAuth } from "../context/AuthContext";
+
+
+function DefaultRedirect() {
+  const { user } = useAuth();
+
+  if (user?.role === "admin"){
+    return <Navigate to="/admin/services" replace />;
+  }
+  return <Navigate to="/services" replace />;
+}
 
 export default function AppRouter() {
   return (
     <Routes>
+      
       {/* DEFAULT */}
-      <Route element={<MainLayout/>}>
-        <Route path="/" element={<Navigate to="/services" replace />} />
-      </Route>
+
+      <Route path="/" element={<DefaultRedirect />} />
       
 
       {/* PUBLIC */}
@@ -38,11 +51,19 @@ export default function AppRouter() {
       {/* PROTECTED */}
       <Route element={<ProtectedRoute />}>
         <Route path="/bookings" element={<BookingsPage />} />
-        <Route path="/admin/bookings" element={<AdminBookingsPage />} />
+      </Route>
+
+      {/* ADMIN PROTECTED */}
+      <Route element={<ProtectedRoute adminOnly />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/bookings" element={<AdminBookingsPage />} />
+          <Route path="/admin/services" element={<AadminServicesPage />} />
+        </Route>
       </Route>
 
       {/* FALLBACK */}
       <Route path="*" element={<Navigate to="/services" replace />} />
+
     </Routes>
   );
 }

@@ -49,6 +49,7 @@ func main() {
 	serviceRepo := repositories.NewServiceRepository(db)
 	serviceService := services.NewServiceService(serviceRepo)
 	serviceHandler := handlers.NewServiceHandler(serviceService)
+	adminServiceHandler := handlers.NewAdminServiceHandler(serviceService)
 
 	bookingRepo := repositories.NewBookingRepository(db)
 
@@ -74,7 +75,7 @@ func main() {
 
 	// PROTECTED ROUTES (JWT)
 	api := e.Group("/api")
-	
+
 	api.Use(middleware.JWTMiddleware)
 
 	api.GET("/profile", userHandler.Profile)
@@ -89,6 +90,11 @@ func main() {
 	admin.PUT("/bookings/:id/approve", adminHandler.Approve)
 	admin.PUT("/bookings/:id/reject", adminHandler.Reject)
 	admin.GET("/bookings", adminHandler.GetAllBookings)
+
+	admin.GET("/services", adminServiceHandler.GetAll)
+	admin.POST("/services", adminServiceHandler.Create)
+	admin.PUT("/services/:id", adminServiceHandler.Update)
+	admin.DELETE("/services/:id", adminServiceHandler.Delete)
 
 	log.Printf("Server running at: http://localhost:%s\n", cfg.AppPort)
 	e.Logger.Fatal(e.Start(":" + cfg.AppPort))

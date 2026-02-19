@@ -2,8 +2,12 @@ import { Navigate, Outlet } from "react-router-dom";
 import { Spin } from "antd";
 import { useAuth } from "../context/AuthContext";
 
-export default function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+type Props = {
+  adminOnly?: boolean;
+};
+
+export default function ProtectedRoute({ adminOnly = false }: Props) {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -13,9 +17,16 @@ export default function ProtectedRoute() {
     );
   }
 
+  // Ngecek Autentikasi
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
+  // Ngecek admin apa bukan
+  if (adminOnly && user?.role !== "admin") {
+    return <Navigate to="/services" replace />;
+  }
+
 
   return <Outlet />;
 }
