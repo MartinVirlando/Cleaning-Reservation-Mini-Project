@@ -1,57 +1,104 @@
-import { Menu } from "antd";
+import { Menu, Layout, Dropdown } from "antd";
 import { Outlet, useNavigate } from "react-router-dom";
+import  type { MenuProps } from "antd";
 import { useAuth } from "../context/AuthContext";
+import {
+    UserOutlined,
+    KeyOutlined,
+    LogoutOutlined,
+    DownOutlined,
+} from "@ant-design/icons";
+
+const { Header, Content} = Layout;
+
 
 export default function MainLayout() {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const profileMenuItems: MenuProps["items"] = [
+    {
+      key: "profile",
+      label: "Profile",
+      icon: <UserOutlined />,
+      onClick: () => navigate("/profile"),
+    },
+    {
+      key: "password",
+      label: "Change Password",
+      icon: <KeyOutlined />,
+      onClick: () => navigate("/change-password"),
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      label: "Logout",
+      icon: <LogoutOutlined />,
+      onClick: handleLogout,
+    },
+  ]
+
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="fixed top-0 left-0 right-0 bg-blue-900 flex items-center justify-between px-6 py-0 z-50 h-16">
-        <div className="text-white font-bold text-lg">Cleaning Service</div>
+    <Layout className="min-h-screen">
+      <Header className="bg-blue-900">
+        <div className="flex justify-between items-center">
+          <h1
+            className="text-white text-xl font-bold cursor-pointer"
+            onClick={() => navigate("/services")}
+          >
+            Cleaning Service
+          </h1>
 
-        <div className="flex items-center gap-6">
-          <div className="text-white opacity-80 text-sm">
-            {user ? user.email : ""}
-          </div>
-
-          <Menu
-            className="bg-blue-900"
-            mode="horizontal"
-            selectable={false}
-            items={[
-              {
-                key: "services",
-                label: "Services",
-                style: { color: "white" },
-                onClick: () => navigate("/services"),
-              },
-              {
-                key: "logout",
-                label: "Logout",
-                style: { color: "white" },
-                onClick: () => {
-                  logout();
-                  navigate("/login");
+          <div className="flex items-center gap-4">
+            {/* Navigation Menu */}
+            <Menu
+              theme="dark"
+              mode="horizontal"
+              className="bg-blue-900"
+              selectable={false}
+              items={[
+                {
+                  key: "services",
+                  label: "Services",
+                  onClick: () => navigate("/services"),
                 },
-              },
-              {
-                key: "bookings",
-                label: "Booking List",
-                style: { color: "white" },
-                onClick: () => {
-                  navigate("/bookings")
-                }
-              },
-            ]}
-          />
-        </div>
-      </header>
+                {
+                  key: "bookings",
+                  label: "Booking List",
+                  onClick: () => navigate("/bookings"),
+                },
+              ]}
+            />
 
-      <main className="mt-16 p-6 bg-gray-100 flex-1 overflow-auto">
+            {/* Profile Dropdown */}
+            <Dropdown
+              menu={{ items: profileMenuItems }}
+              trigger={["click"]}
+              placement="bottomRight"
+            >
+              <div className="flex items-center gap-2 cursor-pointer text-white hover:text-gray-200 transition-colors">
+                <UserOutlined className="text-lg" />
+                <span className="max-w-[150px] truncate">
+                  {user?.email || "User"}
+                </span>
+                <DownOutlined className="text-xs" />
+              </div>
+            </Dropdown>
+          </div>
+        </div>
+      </Header>
+
+      <Content className="p-6 bg-gray-50">
         <Outlet />
-      </main>
-    </div>
+      </Content>
+    </Layout>
   );
 }
