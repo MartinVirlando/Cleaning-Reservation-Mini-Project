@@ -11,6 +11,9 @@ type Booking struct {
 	ServiceID uint
 	Service   Service
 
+	CleanerID *uint
+	Cleaner   *User
+
 	Date    string `gorm:"size:20"`
 	Time    string `gorm:"size:20"`
 	Status  string `gorm:"size:20"`

@@ -14,9 +14,6 @@ export default function Login() {
       <LoginForm />
 
       <div className="mt-4 flex justify-between text-sm">
-        {/* <Link to="/forgot-password" className="text-blue-500 hover:underline">
-          Forgot password?
-        </Link> */}
 
         <Link to="/register" className="text-blue-500 hover:underline">
           Register

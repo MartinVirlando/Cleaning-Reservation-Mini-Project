@@ -227,6 +227,16 @@ export default function BookingsPage() {
                       {booking.address}
                     </span>
                   </p>
+
+                  {booking.status === "approved" && booking.cleaner && (
+                    <p className="flex justify-between mt-2 pt-2 bortder-t border-gray-100">
+                      <span className="text-gray-500">Cleaner:</span>
+                      <span className="font medium text-green-600">
+                        {booking.cleaner.name}
+                      </span>
+                    </p>
+                  )}
+
                 </div>
               </Card>
             ))}

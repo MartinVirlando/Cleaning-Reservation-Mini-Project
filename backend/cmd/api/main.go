@@ -44,7 +44,8 @@ func main() {
 	}))
 
 	authHandler := handlers.NewAuthHandler(db)
-	userHandler := handlers.NewUserHandler()
+	userHandler := handlers.NewUserHandler(db)
+	adminCleanerHandler := handlers.NewAdminCleanerHandler(db)
 
 	serviceRepo := repositories.NewServiceRepository(db)
 	serviceService := services.NewServiceService(serviceRepo)
@@ -56,6 +57,7 @@ func main() {
 	bookingService := services.NewBookingService(bookingRepo, serviceRepo)
 	bookingHandler := handlers.NewBookingHandler(bookingService)
 	adminHandler := handlers.NewAdminHandler(bookingService)
+	cleanerHandler := handlers.NewCleanerHandler(bookingService)
 
 	// PUBLIC ROUTES (NO JWT)
 
@@ -79,6 +81,8 @@ func main() {
 	api.Use(middleware.JWTMiddleware)
 
 	api.GET("/profile", userHandler.Profile)
+	api.PUT("/profile", userHandler.UpdateProfile)
+	api.PUT("/profile/password", userHandler.ChangePassword)
 	api.POST("/bookings", bookingHandler.Create)
 	api.GET("/bookings", bookingHandler.MyBookings)
 
@@ -95,6 +99,14 @@ func main() {
 	admin.POST("/services", adminServiceHandler.Create)
 	admin.PUT("/services/:id", adminServiceHandler.Update)
 	admin.DELETE("/services/:id", adminServiceHandler.Delete)
+
+	admin.GET("/cleaners", adminCleanerHandler.GetAll)
+	admin.POST("/cleaners", adminCleanerHandler.Create)
+
+	// CLEANER ROUTES
+	cleaner := api.Group("/cleaner")
+	cleaner.Use(middleware.CleanerOnly)
+	cleaner.GET("/schedule", cleanerHandler.GetSchedule)
 
 	log.Printf("Server running at: http://localhost:%s\n", cfg.AppPort)
 	e.Logger.Fatal(e.Start(":" + cfg.AppPort))

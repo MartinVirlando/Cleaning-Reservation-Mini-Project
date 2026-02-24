@@ -12,6 +12,10 @@ type BookingService interface {
 
 	UpdateStatus(id uint, status string) error
 	GetAllBookings() ([]models.Booking, error)
+
+	ApproveWithCleaner(bookingID uint, cleanerID uint) error
+
+	GetMySchedule(cleanerID uint) ([]models.Booking, error)
 }
 
 type bookingService struct {
@@ -65,4 +69,12 @@ func (s *bookingService) GetAllBookings() ([]models.Booking, error) {
 
 func (s *bookingService) GetMyBookings(userID uint) ([]models.Booking, error) {
 	return s.repo.FindByUserID(userID)
+}
+
+func (s *bookingService) ApproveWithCleaner(bookingID uint, cleanerID uint) error {
+	return s.repo.ApproveWithCleaner(bookingID, cleanerID)
+}
+
+func (s *bookingService) GetMySchedule(cleanerID uint) ([]models.Booking, error) {
+	return s.repo.FindByCleanerID(cleanerID)
 }

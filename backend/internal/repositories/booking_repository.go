@@ -12,6 +12,8 @@ type BookingRepository interface {
 	FindByID(id uint) (*models.Booking, error)
 	UpdateStatus(id uint, status string) error
 	FindAll() ([]models.Booking, error)
+	ApproveWithCleaner(id uint, cleanerID uint) error
+	FindByCleanerID(cleanerID uint) ([]models.Booking, error)
 }
 
 type bookingRepository struct {
@@ -34,6 +36,7 @@ func (r *bookingRepository) FindByUserID(userID uint) ([]models.Booking, error) 
 			return db.Unscoped()
 		}).
 		Preload("User").
+		Preload("Cleaner").
 		Where("user_id = ?", userID).
 		Find(&bookings).Error
 
@@ -62,7 +65,31 @@ func (r *bookingRepository) UpdateStatus(id uint, status string) error {
 
 func (r *bookingRepository) FindAll() ([]models.Booking, error) {
 	var bookings []models.Booking
-	err := r.db.Preload("User").Preload("Service").
+	err := r.db.
+		Preload("User").
+		Preload("Service").
+		Preload("Cleaner").
 		Find(&bookings).Error
 	return bookings, err
+}
+
+func (r *bookingRepository) ApproveWithCleaner(id uint, cleanerID uint) error {
+	return r.db.Model(&models.Booking{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"status":     "approved",
+		"cleaner_id": cleanerID,
+	}).Error
+}
+
+func (r *bookingRepository) FindByCleanerID(cleanerID uint) ([]models.Booking, error) {
+	var bookings []models.Booking
+	err := r.db.
+		Preload("User").
+		Preload("Service", func(db *gorm.DB) *gorm.DB {
+			return db.Unscoped()
+		}).
+		Where("cleaner_id = ?", cleanerID).
+		Find(&bookings).Error
+
+	return bookings, err
+
 }

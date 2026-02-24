@@ -20,7 +20,18 @@ func NewAdminHandler(bookingService services.BookingService) *AdminHandler {
 func (h *AdminHandler) Approve(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	err := h.bookingService.UpdateStatus(uint(id), "approved")
+	type ApproveRequest struct {
+		CleanerID uint `json:"cleaner_id"`
+	}
+
+	var req ApproveRequest
+	if err := c.Bind(&req); err != nil || req.CleanerID == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"message": "cleaner_id is required",
+		})
+	}
+
+	err := h.bookingService.ApproveWithCleaner(uint(id), req.CleanerID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"message": "Failed to approve booking",

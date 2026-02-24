@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 type Props = {
   adminOnly?: boolean;
+  cleanerOnly?: boolean;
 };
 
 export default function ProtectedRoute({ adminOnly = false }: Props) {

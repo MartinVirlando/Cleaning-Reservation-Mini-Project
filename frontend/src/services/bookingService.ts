@@ -16,6 +16,11 @@ export type Booking = {
     durationMinutes: number;
     isDeleted?: boolean;
   };
+
+  cleaner?: {
+    id: number;
+    name: string;
+  }
 };
 
 
@@ -35,6 +40,12 @@ type BookingApi = {
     Duration: number;
     DeletedAt?: string | null;
   };
+
+  Cleaner?: {
+    ID: number;
+    Username: string;
+  };
+
 };
 
 function mapBooking(b: BookingApi): Booking {
@@ -54,8 +65,13 @@ function mapBooking(b: BookingApi): Booking {
           price: b.Service.Price,
           durationMinutes: b.Service.Duration,
           isDeleted: !!b.Service.DeletedAt,
-        }
-      : undefined,
+        } : undefined,
+
+    cleaner: b.Cleaner
+      ? {
+          id: b.Cleaner.ID,
+          name: b.Cleaner.Username,
+        } : undefined,
   };
 }
 

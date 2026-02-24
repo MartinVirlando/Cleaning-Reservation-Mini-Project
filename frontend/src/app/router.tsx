@@ -6,9 +6,17 @@ import BookingsPage from "../pages/bookings/BookingsPage";
 
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
+
 import AdminBookingsPage from "../pages/bookings/AdminBookingsPage";
 import AadminServicesPage from "../pages/services/AdminServicesPage";
 import AdminLayout from "../layouts/AdminLayout";
+import AdminCleanerPage from "../pages/admin/AdminCleanerPage";
+
+import CleanerLayout from "../layouts/CleanerLayout";
+import CleanerSchedulePage from "../pages/cleaner/CleanerSchedulePage";
+
+import ProfilePage from "../pages/profile/ProfilePage";
+import ChangePasswordPage from "../pages/profile/ChangePasswordPage";
 
 import ProtectedRoute from "../routes/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
@@ -18,10 +26,11 @@ import { useAuth } from "../context/AuthContext";
 
 function DefaultRedirect() {
   const { user } = useAuth();
+  console.log("USER ROLE:", user?.role); 
+  console.log("USER DATA:", user); 
 
-  if (user?.role === "admin"){
-    return <Navigate to="/admin/services" replace />;
-  }
+  if (user?.role === "admin") return <Navigate to="/admin/services" replace />;
+  if (user?.role === "cleaner") return <Navigate to="/cleaner/schedule" replace />;  // ← ini ada tidak?
   return <Navigate to="/services" replace />;
 }
 
@@ -51,6 +60,8 @@ export default function AppRouter() {
       {/* PROTECTED */}
       <Route element={<ProtectedRoute />}>
         <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
       </Route>
 
       {/* ADMIN PROTECTED */}
@@ -60,6 +71,21 @@ export default function AppRouter() {
           <Route path="/admin/services" element={<AadminServicesPage />} />
         </Route>
       </Route>
+
+      <Route element={<AdminLayout />}>
+          <Route path="/admin/bookings" element={<AdminBookingsPage />} />
+          <Route path="/admin/services" element={<AadminServicesPage />} />
+          <Route path="/admin/cleaners" element={<AdminCleanerPage />} /> 
+      </Route>
+
+      {/* CLEANER PROTECTED */}
+      <Route element={<ProtectedRoute cleanerOnly />}>
+        <Route element={<CleanerLayout />}>
+          <Route path="/cleaner/schedule" element={<CleanerSchedulePage />} />
+          <Route path="/cleaner/change-password" element={<ChangePasswordPage />} />
+        </Route>
+      </Route>
+      
 
       {/* FALLBACK */}
       <Route path="*" element={<Navigate to="/services" replace />} />

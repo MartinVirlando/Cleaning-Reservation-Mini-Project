@@ -5,6 +5,7 @@ import {
     AppstoreOutlined,
     BookOutlined,
     LogoutOutlined,
+    TeamOutlined,
 } from "@ant-design/icons";
 
 const { Header, Content} = Layout;
@@ -44,6 +45,12 @@ export default function AuthProvider() {
                                 label: "Manage Bookings",
                                 icon: <BookOutlined />,
                                 onClick: () => navigate("/admin/bookings"),
+                            },
+                            {
+                                key: "cleaners",
+                                label: "Manage Cleaners",
+                                icon: <TeamOutlined />,
+                                onClick: () => navigate("/admin/cleaners"),
                             },
                             {
                                 key: "logout",
