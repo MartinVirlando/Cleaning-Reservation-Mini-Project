@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, Spin, Alert, Empty, Tag, Calendar, Badge } from "antd";
+import { Card, Spin, Alert, Empty, Tag, Calendar, Badge, message, Popconfirm } from "antd";
 import { useBookingsQuery } from "../../services/queries/useBookingsQuery";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/atoms/Buttons";
@@ -7,14 +7,36 @@ import { WarningOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { useAuth } from "../../context/AuthContext";
 
-// Extend dayjs with plugins
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 export default function BookingsPage() {
   const { data, isLoading, isError } = useBookingsQuery();
   const navigate = useNavigate();
+  const { token } = useAuth();
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const handleCancel = async (bookingId: number) => {
+  try {
+    setCancellingId(bookingId);
+    const res = await fetch(
+      `http://localhost:8080/api/bookings/${bookingId}/cancel`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!res.ok) throw new Error();
+    message.success("Booking cancelled!");
+    window.location.reload();
+  } catch {
+    message.error("Gagal cancel booking");
+  } finally {
+    setCancellingId(null);
+  }
+};
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 
   if (isLoading) {
@@ -101,7 +123,7 @@ export default function BookingsPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">My Bookings</h1>
-        <Button onClick={() => navigate(-1)}>Back</Button>
+        <Button onClick={() => navigate("/services")}>Back</Button>
       </div>
 
       {/* Calendar Section */}
@@ -238,6 +260,39 @@ export default function BookingsPage() {
                   )}
 
                 </div>
+
+                {/* Hanya tampil jika status pending */}
+                {booking.status === "pending" && (
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    {/* Cancel Booking */}
+                    <Popconfirm
+                      title="Cancel booking ini?"
+                      description="Tindakan ini tidak bisa dibatalkan"
+                      onConfirm={() => handleCancel(booking.id)}
+                      okText="Ya, Cancel"
+                      cancelText="Tidak"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Button
+                        danger
+                        size="small"
+                        loading={cancellingId === booking.id}
+                        className="w-full"
+                      >
+                        Cancel Booking
+                      </Button>
+                    </Popconfirm>
+                  </div>
+                )}
+
+                {booking.status === "approved" && booking.cleaner && (
+                  <p className="flex justify-between mt-2 pt-2 border-t border-gray-100">
+                    <span className="text-gray-500">Cleaner:</span>
+                    <span className="font-medium text-green-600">
+                      {booking.cleaner.name}
+                    </span>
+                  </p>
+                )}
               </Card>
             ))}
           </div>

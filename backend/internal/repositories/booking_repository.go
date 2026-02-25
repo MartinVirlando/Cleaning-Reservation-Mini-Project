@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"backend/internal/models"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -14,6 +15,7 @@ type BookingRepository interface {
 	FindAll() ([]models.Booking, error)
 	ApproveWithCleaner(id uint, cleanerID uint) error
 	FindByCleanerID(cleanerID uint) ([]models.Booking, error)
+	CancelBooking(id uint, userID uint) error
 }
 
 type bookingRepository struct {
@@ -92,4 +94,16 @@ func (r *bookingRepository) FindByCleanerID(cleanerID uint) ([]models.Booking, e
 
 	return bookings, err
 
+}
+
+func (r *bookingRepository) CancelBooking(id uint, userID uint) error {
+	result := r.db.Model(&models.Booking{}).
+		Where("id = ? AND user_id = ? AND status = ?", id, userID, "pending").
+		Update("status", "canceled")
+
+	if result.RowsAffected == 0 {
+		return errors.New("Booking not found or cannot be canceled")
+	}
+
+	return result.Error
 }

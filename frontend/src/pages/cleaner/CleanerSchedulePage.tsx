@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, Tag, Spin, Alert, Empty } from "antd";
 import { useAuth } from "../../context/AuthContext";
 import { CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, UserOutlined } from "@ant-design/icons";
+import  dayjs  from "dayjs";
 
 type ScheduleBooking = {
   ID: number;
@@ -60,47 +61,72 @@ export default function CleanerSchedulePage() {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {schedule.map((booking) => (
-          <Card
-            key={booking.ID}
-            hoverable
-            className="shadow-md"
-            title={
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-green-800">
-                  {booking.Service?.Name || "Unknown Service"}
-                </span>
-                <Tag color="green">{booking.Status?.toUpperCase()}</Tag>
+        {schedule.map((booking) => {
+          // Cek apakah tanggal booking sudah lewat
+          const isPast = dayjs(booking.Date).isBefore(dayjs(), "day");
+          const isToday = dayjs(booking.Date).isSame(dayjs(), "day");
+
+          return (
+            <Card
+              key={booking.ID}
+              hoverable
+              // Ubah warna card berdasarkan status tanggal
+              className={`shadow-md transition-all ${
+                isPast
+                  ? "opacity-60 bg-gray-50"   
+                  : isToday
+                  ? "border-2 border-green-400 bg-green-50"  
+                  : "bg-white"  
+              }`}
+              title={
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-green-800">
+                    {booking.Service?.Name || "Unknown Service"}
+                  </span>
+                  <div className="flex gap-2">
+                    {isToday && (
+                      <Tag color="green">TODAY</Tag>
+                    )}
+                    {isPast && (
+                      <Tag color="default">DONE</Tag>
+                    )}
+                    {!isPast && !isToday && (
+                      <Tag color="blue">UPCOMING</Tag>
+                    )}
+                  </div>
+                </div>
+              }
+            >
+              <div className="space-y-2 text-sm">
+                <p className="flex items-center gap-2">
+                  <UserOutlined className="text-gray-400" />
+                  <span className="text-gray-500">Customer:</span>
+                  <span className="font-medium">{booking.User?.Email || "-"}</span>
+                </p>
+
+                <p className="flex items-center gap-2">
+                  <CalendarOutlined className="text-gray-400" />
+                  <span className="text-gray-500">Date:</span>
+                  <span className={`font-medium ${isToday ? "text-green-600" : isPast ? "text-gray-400" : ""}`}>
+                    {booking.Date}
+                  </span>
+                </p>
+
+                <p className="flex items-center gap-2">
+                  <ClockCircleOutlined className="text-gray-400" />
+                  <span className="text-gray-500">Time:</span>
+                  <span className="font-medium">{booking.Time}</span>
+                </p>
+
+                <p className="flex items-center gap-2">
+                  <EnvironmentOutlined className="text-gray-400" />
+                  <span className="text-gray-500">Address:</span>
+                  <span className="font-medium">{booking.Address}</span>
+                </p>
               </div>
-            }
-          >
-            <div className="space-y-2 text-sm">
-              <p className="flex items-center gap-2">
-                <UserOutlined className="text-gray-400" />
-                <span className="text-gray-500">Customer:</span>
-                <span className="font-medium">{booking.User?.Email || "-"}</span>
-              </p>
-
-              <p className="flex items-center gap-2">
-                <CalendarOutlined className="text-gray-400" />
-                <span className="text-gray-500">Date:</span>
-                <span className="font-medium">{booking.Date}</span>
-              </p>
-
-              <p className="flex items-center gap-2">
-                <ClockCircleOutlined className="text-gray-400" />
-                <span className="text-gray-500">Time:</span>
-                <span className="font-medium">{booking.Time}</span>
-              </p>
-
-              <p className="flex items-center gap-2">
-                <EnvironmentOutlined className="text-gray-400" />
-                <span className="text-gray-500">Address:</span>
-                <span className="font-medium">{booking.Address}</span>
-              </p>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

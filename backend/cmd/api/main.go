@@ -85,6 +85,7 @@ func main() {
 	api.PUT("/profile/password", userHandler.ChangePassword)
 	api.POST("/bookings", bookingHandler.Create)
 	api.GET("/bookings", bookingHandler.MyBookings)
+	api.PUT("/bookings/:id/cancel", bookingHandler.Cancel)
 
 	// ADMIN ROUTES
 	admin := api.Group("/admin")
@@ -102,6 +103,7 @@ func main() {
 
 	admin.GET("/cleaners", adminCleanerHandler.GetAll)
 	admin.POST("/cleaners", adminCleanerHandler.Create)
+	admin.DELETE("/cleaners/:id", adminCleanerHandler.Delete)
 
 	// CLEANER ROUTES
 	cleaner := api.Group("/cleaner")

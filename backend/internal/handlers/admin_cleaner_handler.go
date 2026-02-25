@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"backend/internal/models"
 
@@ -112,4 +113,25 @@ func (h *AdminCleanerHandler) Create(c echo.Context) error {
 		},
 	})
 
+}
+
+func (h *AdminCleanerHandler) Delete(c echo.Context) error {
+    id, _ := strconv.Atoi(c.Param("id"))
+
+    var cleaner models.User
+    if err := h.db.Where("id = ? AND role = ?", id, "cleaner").First(&cleaner).Error; err != nil {
+        return c.JSON(http.StatusNotFound, map[string]string{
+            "message": "Cleaner not found",
+        })
+    }
+
+    if err := h.db.Delete(&cleaner).Error; err != nil {
+        return c.JSON(http.StatusInternalServerError, map[string]string{
+            "message": "Failed to delete cleaner",
+        })
+    }
+
+    return c.JSON(http.StatusOK, map[string]string{
+        "message": "Cleaner deleted successfully",
+    })
 }

@@ -55,6 +55,7 @@ export default function AuthProvider() {
                             {
                                 key: "logout",
                                 label: "Logout",
+                                danger: true,
                                 icon: <LogoutOutlined />,
                                 onClick: handleLogout,  
                             }

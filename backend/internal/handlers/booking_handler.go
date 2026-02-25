@@ -102,3 +102,20 @@ func (h *BookingHandler) Detail(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, booking)
 }
+
+func (h *BookingHandler) Cancel(c echo.Context) error {
+	userID := uint(c.Get("user_id").(float64))
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	err := h.service.CancelBooking(uint(id), userID)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Booking Canceled",
+	})
+
+}

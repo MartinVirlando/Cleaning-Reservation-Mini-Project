@@ -16,6 +16,7 @@ type BookingService interface {
 	ApproveWithCleaner(bookingID uint, cleanerID uint) error
 
 	GetMySchedule(cleanerID uint) ([]models.Booking, error)
+	CancelBooking(id uint, userID uint) error
 }
 
 type bookingService struct {
@@ -78,3 +79,8 @@ func (s *bookingService) ApproveWithCleaner(bookingID uint, cleanerID uint) erro
 func (s *bookingService) GetMySchedule(cleanerID uint) ([]models.Booking, error) {
 	return s.repo.FindByCleanerID(cleanerID)
 }
+
+func (s *bookingService) CancelBooking(id uint, userID uint) error {
+	return s.repo.CancelBooking(id, userID)
+}
+

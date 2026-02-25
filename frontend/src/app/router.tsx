@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
+import HomePage from "../pages/home/HomePage";
 import ServicesPage from "../pages/services/ServicesPage";
 import ServiceDetailPage from "../pages/services/ServiceDetailPage";
 import BookingsPage from "../pages/bookings/BookingsPage";
@@ -23,45 +24,37 @@ import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import { useAuth } from "../context/AuthContext";
 
-
 function DefaultRedirect() {
   const { user } = useAuth();
-  console.log("USER ROLE:", user?.role); 
-  console.log("USER DATA:", user); 
-
   if (user?.role === "admin") return <Navigate to="/admin/services" replace />;
-  if (user?.role === "cleaner") return <Navigate to="/cleaner/schedule" replace />;  // ← ini ada tidak?
-  return <Navigate to="/services" replace />;
+  if (user?.role === "cleaner") return <Navigate to="/cleaner/schedule" replace />;
+  return <Navigate to="/" replace />;  // ← user biasa ke homepage
 }
 
 export default function AppRouter() {
   return (
     <Routes>
-      
-      {/* DEFAULT */}
 
-      <Route path="/" element={<DefaultRedirect />} />
-      
-
-      {/* PUBLIC */}
-      <Route element={<MainLayout/>}>
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/services/:id" element={<ServiceDetailPage />} />
+      {/* HOME */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/services/:id" element={<ServiceDetailPage />} />
       </Route>
-      
 
       {/* AUTH */}
-      <Route element={<AuthLayout/>}>
+      <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Route>
-      
 
-      {/* PROTECTED */}
+      {/* USER PROTECTED */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/bookings" element={<BookingsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/change-password" element={<ChangePasswordPage />} />
+        <Route element={<MainLayout />}>
+          <Route path="/bookings" element={<BookingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/change-password" element={<ChangePasswordPage />} />
+        </Route>
       </Route>
 
       {/* ADMIN PROTECTED */}
@@ -69,26 +62,20 @@ export default function AppRouter() {
         <Route element={<AdminLayout />}>
           <Route path="/admin/bookings" element={<AdminBookingsPage />} />
           <Route path="/admin/services" element={<AadminServicesPage />} />
+          <Route path="/admin/cleaners" element={<AdminCleanerPage />} />
         </Route>
       </Route>
 
-      <Route element={<AdminLayout />}>
-          <Route path="/admin/bookings" element={<AdminBookingsPage />} />
-          <Route path="/admin/services" element={<AadminServicesPage />} />
-          <Route path="/admin/cleaners" element={<AdminCleanerPage />} /> 
-      </Route>
-
-      {/* CLEANER PROTECTED */}
+      {/* CLEANER */}
       <Route element={<ProtectedRoute cleanerOnly />}>
         <Route element={<CleanerLayout />}>
           <Route path="/cleaner/schedule" element={<CleanerSchedulePage />} />
           <Route path="/cleaner/change-password" element={<ChangePasswordPage />} />
         </Route>
       </Route>
-      
 
       {/* FALLBACK */}
-      <Route path="*" element={<Navigate to="/services" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
 
     </Routes>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Modal, Form, Input, message } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Table, Button, Modal, Form, Input,message, Popconfirm } from "antd";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useAuth } from "../../context/AuthContext";
 
 type Cleaner = {
@@ -71,6 +71,21 @@ export default function AdminCleanerPage() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/admin/cleaners/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error();
+      message.success("Cleaner berhasil dihapus!");
+      fetchCleaners();
+    } catch {
+      message.error("Gagal hapus cleaner");
+    }
+  };
+
   const columns = [
     {
       title: "Username",
@@ -79,6 +94,23 @@ export default function AdminCleanerPage() {
     {
       title: "Email",
       dataIndex: "email",
+    },
+    {
+      title: "Action",
+      render: (_: any, record: Cleaner) => (
+        <Popconfirm
+          title="Hapus cleaner ini?"
+          description="Tindakan ini tidak bisa dibatalkan"
+          onConfirm={() => handleDelete(record.id)}
+          okText="Hapus"
+          cancelText="Batal"
+          okButtonProps={{ danger: true }}
+        >
+          <Button danger icon={<DeleteOutlined />}>
+            Delete
+          </Button>
+        </Popconfirm>
+      ),
     },
   ];
 

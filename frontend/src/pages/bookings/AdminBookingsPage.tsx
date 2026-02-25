@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Space, Tag, message, Modal, Select } from "antd";
+import { Table, Button, Space, Tag, message, Modal, Select, Popconfirm } from "antd";
 import { useAuth } from "../../context/AuthContext";
 
 type Booking = {
@@ -10,7 +10,7 @@ type Booking = {
   Time: string;
   Address: string;
   Status: string;
-  Cleaner?: { ID: number; Username: string };
+  Cleaner?: { ID: number; username: string };
 };
 
 type Cleaner = {
@@ -74,7 +74,7 @@ export default function AdminBookingsPage() {
   
   const openApproveModal = (bookingId: number) => {
     setSelectedBookingId(bookingId);
-    setSelectedCleanerId(null); // reset pilihan cleaner
+    setSelectedCleanerId(null); 
     setApproveModalOpen(true);
   };
 
@@ -111,6 +111,7 @@ export default function AdminBookingsPage() {
     }
   };
 
+  // Reject booking
   const handleReject = async (id: number) => {
     try {
       const res = await fetch(
@@ -152,7 +153,7 @@ export default function AdminBookingsPage() {
     {
       title: "Cleaner",
       render: (_: any, record: Booking) =>
-        record.Cleaner ? record.Cleaner.Username : "-",
+        record.Cleaner ? record.Cleaner.username : "-",
     },
     {
       title: "Status",
@@ -182,13 +183,22 @@ export default function AdminBookingsPage() {
           >
             Approve
           </Button>
-          <Button
-            danger
-            onClick={() => handleReject(record.ID)}
-            disabled={record.Status !== "pending"}
+
+          <Popconfirm
+                title="Reject booking ini?"
+                description="Tindakan ini tidak bisa dibatalkan"
+                onConfirm={() => handleReject(record.ID)}
+                okText="Reject"
+                cancelText="Batal"
+                okButtonProps={{ danger: true }}
           >
-            Reject
-          </Button>
+                <Button
+                  danger
+                  disabled={record.Status !== "pending"}
+                >
+                  Reject
+                </Button>
+      </Popconfirm>
         </Space>
       ),
     },

@@ -42,8 +42,8 @@ type BookingApi = {
   };
 
   Cleaner?: {
-    ID: number;
-    Username: string;
+    id: number;
+    username: string;
   };
 
 };
@@ -69,8 +69,8 @@ function mapBooking(b: BookingApi): Booking {
 
     cleaner: b.Cleaner
       ? {
-          id: b.Cleaner.ID,
-          name: b.Cleaner.Username,
+          id: b.Cleaner.id,
+          name: b.Cleaner.username,
         } : undefined,
   };
 }
