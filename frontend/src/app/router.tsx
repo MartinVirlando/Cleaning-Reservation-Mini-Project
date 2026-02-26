@@ -42,7 +42,7 @@ export default function AppRouter() {
         <Route path="/services/:id" element={<ServiceDetailPage />} />
       </Route>
 
-      {/* AUTH */}
+      {/* AUTH */}z
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

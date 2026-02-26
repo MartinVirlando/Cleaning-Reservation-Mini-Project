@@ -10,7 +10,9 @@ type Booking = {
   Time: string;
   Address: string;
   Status: string;
+  PaymentStatus : string;
   Cleaner?: { ID: number; username: string };
+
 };
 
 type Cleaner = {
@@ -156,6 +158,15 @@ export default function AdminBookingsPage() {
         record.Cleaner ? record.Cleaner.username : "-",
     },
     {
+      title: "Payment",
+      dataIndex: "PaymentStatus",
+      render: (paymentStatus: string) => (
+        <Tag color={paymentStatus === "paid" ? "green" : "red"}>
+          {paymentStatus === "paid" ? "LUNAS" : "BELUM BAYAR"}
+        </Tag>
+      ),
+    },
+    {
       title: "Status",
       dataIndex: "Status",
       render: (status: string) => (
@@ -179,7 +190,7 @@ export default function AdminBookingsPage() {
           <Button
             type="primary"
             onClick={() => openApproveModal(record.ID)}
-            disabled={record.Status !== "pending"}
+            disabled={record.Status !== "pending" || record.PaymentStatus !== "paid"}
           >
             Approve
           </Button>

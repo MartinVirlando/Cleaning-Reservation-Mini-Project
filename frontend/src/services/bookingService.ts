@@ -8,6 +8,9 @@ export type Booking = {
   time: string;
   status: string;
   address?: string;
+  paymentStatus: string;
+  snapToken?: string;
+
 
   service?: {
     id: number;
@@ -32,6 +35,9 @@ type BookingApi = {
   Time: string;
   Status: string;
   Address?: string;
+  PaymentStatus?: string;
+  SnapToken?: string;
+
 
   Service?: {
     ID: number;
@@ -57,6 +63,9 @@ function mapBooking(b: BookingApi): Booking {
     time: b.Time,
     status: b.Status,
     address: b.Address,
+    paymentStatus: b.PaymentStatus ?? "unpaid",
+    snapToken: b.SnapToken,
+
 
     service: b.Service
       ? {

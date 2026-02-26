@@ -16,6 +16,9 @@ type BookingRepository interface {
 	ApproveWithCleaner(id uint, cleanerID uint) error
 	FindByCleanerID(cleanerID uint) ([]models.Booking, error)
 	CancelBooking(id uint, userID uint) error
+	UpdatePaymentToken(id uint, token string, orderID string) error
+	UpdatePaymentStatus(id uint, status string) error
+	FindByOrderID(orderID string) (*models.Booking, error)
 }
 
 type bookingRepository struct {
@@ -49,7 +52,10 @@ func (r *bookingRepository) FindByID(id uint) (*models.Booking, error) {
 	var booking models.Booking
 
 	err := r.db.
-		Preload("Service").
+		Preload("Service", func (db *gorm.DB) *gorm.DB  {
+			return  db.Unscoped()
+		}).
+		Preload("User").
 		First(&booking, id).Error
 
 	if err != nil {
@@ -106,4 +112,23 @@ func (r *bookingRepository) CancelBooking(id uint, userID uint) error {
 	}
 
 	return result.Error
+}
+
+func (r *bookingRepository) UpdatePaymentToken(id uint, token string, orderID string) error {
+	return r.db.Model(&models.Booking{}).Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"snap_token":        token,
+			"midtrans_order_id": orderID,
+		}).Error
+}
+
+func (r *bookingRepository) UpdatePaymentStatus(id uint, status string) error {
+	return r.db.Model(&models.Booking{}).Where("id = ?", id).
+		Update("payment_status", status).Error
+}
+
+func (r *bookingRepository) FindByOrderID(orderID string) (*models.Booking, error) {
+	var booking models.Booking
+	err := r.db.Where("midtrans_order_id = ?", orderID).First(&booking).Error
+	return &booking, err
 }

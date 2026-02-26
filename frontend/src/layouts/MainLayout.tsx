@@ -69,7 +69,7 @@ export default function MainLayout() {
             className="text-white text-xl font-bold cursor-pointer"
             onClick={() => navigate("/")}  
           >
-            Cleaning Service
+            CleanPro
           </h1>
 
           <div className="flex items-center gap-4">

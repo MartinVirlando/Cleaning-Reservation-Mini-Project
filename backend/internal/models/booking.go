@@ -19,6 +19,10 @@ type Booking struct {
 	Status  string `gorm:"size:20"`
 	Address string `gorm:"size:255"`
 
+	PaymentStatus   string `gorm:"size:20;default:'unpaid'"`
+	SnapToken       string `gorm:"size:500"`
+	MidTransOrderID string `gorm:"size:100"`
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

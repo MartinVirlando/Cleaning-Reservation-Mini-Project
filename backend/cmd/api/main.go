@@ -59,6 +59,8 @@ func main() {
 	adminHandler := handlers.NewAdminHandler(bookingService)
 	cleanerHandler := handlers.NewCleanerHandler(bookingService)
 
+	paymentHandler := handlers.NewPaymentHandler(bookingRepo, cfg)
+
 	// PUBLIC ROUTES (NO JWT)
 
 	e.POST("/auth/register", authHandler.Register)
@@ -86,6 +88,9 @@ func main() {
 	api.POST("/bookings", bookingHandler.Create)
 	api.GET("/bookings", bookingHandler.MyBookings)
 	api.PUT("/bookings/:id/cancel", bookingHandler.Cancel)
+
+	api.POST("/bookings/:id/pay", paymentHandler.CreateSnapToken)
+	e.POST("/payment/webhook", paymentHandler.HandleWebhook)
 
 	// ADMIN ROUTES
 	admin := api.Group("/admin")

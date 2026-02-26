@@ -18,6 +18,9 @@ type Config struct {
 	DBSSLMode  string
 
 	JWTSecret string
+
+	MidtransServerKey string
+	MidtransClientKey string
 }
 
 func Load() *Config {
@@ -34,6 +37,9 @@ func Load() *Config {
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
 
 		JWTSecret: getEnv("JWT_SECRET", "supersecretjwtkey"),
+		MidtransServerKey: getEnv("MIDTRANS_SERVER_KEY", ""),
+		MidtransClientKey: getEnv("MIDTRANS_CLIENT_KEY", ""),
+
 	}
 
 	if cfg.DBPassword == "" {
