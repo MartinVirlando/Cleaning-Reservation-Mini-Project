@@ -7,7 +7,8 @@ import {
   CalendarOutlined, CheckCircleOutlined, HomeOutlined,
   PhoneOutlined, MailOutlined, UserOutlined, ArrowRightOutlined, StarOutlined,
 } from "@ant-design/icons";
-import heroBg from "../../assets/home.jpg";   
+import heroBg from "../../assets/home.jpg";
+import gambar2 from "../../assets/gambar2.jpg";   
 
 function FadeInOnScroll({ children, delay = 0}: {children: React.ReactNode, delay?: number}) {
   return (
@@ -207,6 +208,17 @@ export default function HomePage() {
           </div>
 
         </Carousel>
+      </section>
+
+      {/* Visual Break Section */}
+      <section className="relative h-64 overflow-hidden">
+        <img src={gambar2} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 flex items-center justify-center"
+          style={{ background: "rgba(15,23,42,0.55)" }}>
+          <p className="text-white text-2xl font-bold tracking-widest uppercase">
+            Clean · Innovate · Shine
+          </p>
+        </div>
       </section>
       
       {/* How It Works */}
