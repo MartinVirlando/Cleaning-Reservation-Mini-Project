@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Space, Tag, message, Modal, Select, Popconfirm, Input } from "antd";
+import { Table, Button, Space, message, Modal, Select, Popconfirm} from "antd";
 import { useAuth } from "../../context/AuthContext";
-import { CheckCircleOutlined, CloseCircleOutlined, SearchOutlined, UserOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, CloseCircleOutlined, UserOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined } from "@ant-design/icons";
 
 type Booking = {
   ID: number;
@@ -242,6 +242,7 @@ export default function AdminBookingsPage() {
 
       {/* Table Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        
         {/* Filters */}
         <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h2 className="font-semibold text-gray-800">All Bookings</h2>

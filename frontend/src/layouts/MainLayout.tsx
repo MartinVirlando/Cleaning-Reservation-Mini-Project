@@ -1,6 +1,6 @@
 import { Menu, Layout, Dropdown, Button } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MenuProps } from "antd";
 import { useAuth } from "../context/AuthContext";
 import {

@@ -35,7 +35,7 @@ export default function CleanerLayout() {
 
   return (
     <Layout className="min-h-screen">
-      <Header className="bg-green-900">
+      <Header style={{ background: "#1e3a5f" }}>
         <div className="flex justify-between items-center">
           <h1 className="text-white text-xl font-bold">
             Cleaner Panel
@@ -45,7 +45,7 @@ export default function CleanerLayout() {
             <Menu
               theme="dark"
               mode="horizontal"
-              className="bg-green-900"
+              style={{ background: "#1e3a5f" }}
               selectable={false}
               items={[
                 {
@@ -65,7 +65,7 @@ export default function CleanerLayout() {
               <div className="flex items-center gap-2 cursor-pointer text-white hover:text-gray-200 transition-colors">
                 <UserOutlined className="text-lg" />
                 <span className="max-w-[150px] truncate">
-                  {user?.email || "Cleaner"}
+                  {user?.name || "Cleaner"}
                 </span>
                 <DownOutlined className="text-xs" />
               </div>
