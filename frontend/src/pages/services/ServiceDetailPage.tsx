@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Alert, Form, DatePicker, TimePicker, message } from "antd";
 import { useServiceDetailQuery } from "../../services/queries/useServiceDetailQuery";
 import { createBooking } from "../../services/bookingService";
+import dayjs from "dayjs";
 import type { AxiosError } from "axios";
 import Input from "../../components/atoms/Input";
 import { useEffect, useRef } from "react";
@@ -16,6 +17,28 @@ function getServiceIcon(name: string): string {
   if (n.includes("carpet") || n.includes("karpet")) return "⬟";
   return "◉";
 }
+
+const disabledDate = (current: dayjs.Dayjs) => {
+  if (!current) return false;
+  const day = current.day(); 
+  const isSunday = day === 0;
+  const isPastOrToday = current.isBefore(dayjs().add(1, "day"), "day");
+  return isSunday || isPastOrToday;
+};
+
+const disabledTime = () => ({
+  disabledHours: () => {
+    const hours = [];
+    for (let i = 0; i < 8; i++) hours.push(i);  
+    for (let i = 17; i < 24; i++) hours.push(i);  
+    return hours;
+  },
+  disabledMinutes: (hour: number) => {
+    
+    if (hour === 17) return Array.from({ length: 60 }, (_, i) => i + 1);
+    return [];
+  },
+});
 
 export default function ServiceDetailPage() {
   const { id } = useParams();
@@ -286,7 +309,10 @@ export default function ServiceDetailPage() {
                     name="date"
                     rules={[{ required: true, message: "Please select date" }]}
                   >
-                    <DatePicker className="w-full" style={{ height: 44 }} />
+                    <DatePicker 
+                      className="w-full" 
+                      style={{ height: 44 }}
+                      disabledDate={disabledDate} />
                   </Form.Item>
 
                   <Form.Item
@@ -294,7 +320,13 @@ export default function ServiceDetailPage() {
                     name="time"
                     rules={[{ required: true, message: "Please select time" }]}
                   >
-                    <TimePicker className="w-full" format="HH:mm" style={{ height: 44 }} />
+                    <TimePicker 
+                      className="w-full" 
+                      format="HH:mm" 
+                      style={{ height: 44 }}
+                      disabledTime={disabledTime}
+                      hideDisabledOptions
+                      minuteStep={30} />
                   </Form.Item>
                 </div>
 
