@@ -12,6 +12,7 @@ func Migrate(db *gorm.DB) error {
 		&models.User{},
 		&models.Service{},
 		&models.Booking{},
+		&models.Rating{},
 	); err != nil {
 		return err
 	}

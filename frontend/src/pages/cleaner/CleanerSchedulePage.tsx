@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert } from "antd";
+import { Alert, Modal, Upload, message } from "antd";
 import { useAuth } from "../../context/AuthContext";
 import {
   CalendarOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
   UserOutlined,
+  UploadOutlined,
+  PlayCircleOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import type { UploadFile } from "antd/es/upload/interface";
 
 type ScheduleBooking = {
   ID: number;
@@ -29,53 +33,34 @@ export default function CleanerSchedulePage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
+  // Submit done state
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [submitTargetId, setSubmitTargetId] = useState<number | null>(null);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [startingId, setStartingId] = useState<number | null>(null);
+
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = `
       .cs-card {
         opacity: 0;
         transform: translateY(20px);
-        transition:
-          opacity 0.45s cubic-bezier(.22,1,.36,1),
-          transform 0.45s cubic-bezier(.22,1,.36,1),
-          box-shadow 0.2s ease;
+        transition: opacity 0.45s cubic-bezier(.22,1,.36,1), transform 0.45s cubic-bezier(.22,1,.36,1), box-shadow 0.2s ease;
       }
       .cs-card.visible { opacity: 1; transform: translateY(0); }
-      .cs-card:hover {
-        transform: translateY(-4px) !important;
-        box-shadow: 0 16px 40px -8px rgba(37,99,235,0.15) !important;
-      }
+      .cs-card:hover { transform: translateY(-4px) !important; box-shadow: 0 16px 40px -8px rgba(37,99,235,0.15) !important; }
       .cs-icon { transition: transform 0.3s cubic-bezier(.34,1.56,.64,1); }
       .cs-card:hover .cs-icon { transform: rotate(-6deg) scale(1.1); }
-
       .cs-filter-btn {
-        font-size: 13px;
-        font-weight: 600;
-        padding: 7px 18px;
-        border-radius: 99px;
-        border: 1.5px solid transparent;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        background: transparent;
+        font-size: 13px; font-weight: 600; padding: 7px 18px;
+        border-radius: 99px; border: 1.5px solid transparent;
+        cursor: pointer; transition: all 0.2s ease; background: transparent;
       }
-      .cs-filter-btn.active {
-        background: #2563eb;
-        color: white;
-        border-color: #2563eb;
-        box-shadow: 0 4px 12px rgba(37,99,235,0.25);
-      }
-      .cs-filter-btn:not(.active) {
-        color: #2563eb;
-        border-color: #bfdbfe;
-        background: rgba(37,99,235,0.05);
-      }
-      .cs-filter-btn:not(.active):hover {
-        background: rgba(37,99,235,0.1);
-      }
-
-      .cs-today-pulse {
-        animation: cs-pulse 2s infinite;
-      }
+      .cs-filter-btn.active { background: #2563eb; color: white; border-color: #2563eb; box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+      .cs-filter-btn:not(.active) { color: #2563eb; border-color: #bfdbfe; background: rgba(37,99,235,0.05); }
+      .cs-filter-btn:not(.active):hover { background: rgba(37,99,235,0.1); }
+      .cs-today-pulse { animation: cs-pulse 2s infinite; }
       @keyframes cs-pulse {
         0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.3); }
         50% { box-shadow: 0 0 0 8px rgba(37,99,235,0); }
@@ -85,22 +70,23 @@ export default function CleanerSchedulePage() {
     return () => { document.head.removeChild(style); };
   }, []);
 
+  const fetchSchedule = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:8080/api/cleaner/schedule", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      setSchedule(await res.json());
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
-    const fetchSchedule = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("http://localhost:8080/api/cleaner/schedule", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error();
-        setSchedule(await res.json());
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchSchedule();
   }, [token]);
 
@@ -115,14 +101,65 @@ export default function CleanerSchedulePage() {
     return () => clearTimeout(timeout);
   }, [schedule, filter]);
 
+  // ── Start job ──
+  const handleStart = async (id: number) => {
+    try {
+      setStartingId(id);
+      const res = await fetch(`http://localhost:8080/api/cleaner/bookings/${id}/start`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      message.success("Job dimulai!");
+      fetchSchedule();
+    } catch {
+      message.error("Gagal memulai job");
+    } finally {
+      setStartingId(null);
+    }
+  };
+
+  // ── Open submit done ──
+  const openSubmitModal = (id: number) => {
+    setSubmitTargetId(id);
+    setFileList([]);
+    setSubmitModalOpen(true);
+  };
+
+  // ── Submit done + foto ──
+  const handleSubmitDone = async () => {
+    if (!submitTargetId) return;
+    try {
+      setSubmitting(true);
+      const formData = new FormData();
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        formData.append("image", fileList[0].originFileObj);
+      }
+      const res = await fetch(
+        `http://localhost:8080/api/cleaner/bookings/${submitTargetId}/submit`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+      if (!res.ok) throw new Error();
+      message.success("Berhasil submit! Menunggu konfirmasi customer.");
+      setSubmitModalOpen(false);
+      fetchSchedule();
+    } catch {
+      message.error("Gagal submit");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen" style={{ background: "#f8fafc" }}>
         <div className="text-center">
-          <div
-            className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin mx-auto mb-3"
-            style={{ borderColor: "#2563eb", borderTopColor: "transparent" }}
-          />
+          <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin mx-auto mb-3"
+            style={{ borderColor: "#2563eb", borderTopColor: "transparent" }} />
           <p className="text-sm font-medium text-gray-500">Loading schedule...</p>
         </div>
       </div>
@@ -131,7 +168,6 @@ export default function CleanerSchedulePage() {
 
   if (error) return <Alert type="error" message="Failed to load schedule" />;
 
-  // Sort: today → upcoming → done
   const sorted = [...schedule].sort((a, b) => {
     const aIsToday = dayjs(a.Date).isSame(dayjs(), "day");
     const bIsToday = dayjs(b.Date).isSame(dayjs(), "day");
@@ -149,19 +185,28 @@ export default function CleanerSchedulePage() {
     const isPast = dayjs(b.Date).isBefore(dayjs(), "day");
     if (filter === "today") return isToday;
     if (filter === "upcoming") return !isToday && !isPast;
-    if (filter === "done") return isPast;
+    if (filter === "done") return isPast || b.Status === "done";
     return true;
   });
 
   const todayCount = schedule.filter((b) => dayjs(b.Date).isSame(dayjs(), "day")).length;
   const upcomingCount = schedule.filter((b) => !dayjs(b.Date).isBefore(dayjs(), "day") && !dayjs(b.Date).isSame(dayjs(), "day")).length;
-  const doneCount = schedule.filter((b) => dayjs(b.Date).isBefore(dayjs(), "day")).length;
+  const doneCount = schedule.filter((b) => b.Status === "done").length;
+
+  // Helper warna status
+  const statusBadge: Record<string, { bg: string; color: string; label: string }> = {
+    approved:          { bg: "#dbeafe", color: "#1d4ed8", label: "APPROVED" },
+    on_progress:       { bg: "#fef9c3", color: "#a16207", label: "ON PROGRESS" },
+    awaiting_approval: { bg: "#fde68a", color: "#92400e", label: "AWAITING APPROVAL" },
+    complained:        { bg: "#fee2e2", color: "#b91c1c", label: "COMPLAINED" },
+    done:              { bg: "#dcfce7", color: "#15803d", label: "DONE" },
+  };
 
   return (
     <div className="min-h-screen p-6" style={{ background: "#f8fafc" }}>
       <div className="max-w-5xl mx-auto">
 
-        {/* ── HEADER ── */}
+        {/* HEADER */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">My Schedule</h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -169,52 +214,29 @@ export default function CleanerSchedulePage() {
           </p>
         </div>
 
-        {/* ── STATS BAR ── */}
-        <div
-          className="grid grid-cols-3 rounded-2xl overflow-hidden mb-8"
-          style={{
-            background: "#1e3a5f",
-            boxShadow: "0 8px 32px -8px rgba(30,58,95,0.35)",
-          }}
-        >
+        {/* STATS BAR */}
+        <div className="grid grid-cols-3 rounded-2xl overflow-hidden mb-8"
+          style={{ background: "#1e3a5f", boxShadow: "0 8px 32px -8px rgba(30,58,95,0.35)" }}>
           {[
             { label: "Today", value: todayCount, sub: "job hari ini", highlight: true },
             { label: "Upcoming", value: upcomingCount, sub: "akan datang", highlight: false },
             { label: "Done", value: doneCount, sub: "selesai", highlight: false },
           ].map((stat, i) => (
-            <div
-              key={stat.label}
-              className="px-6 py-5"
-              style={{ borderRight: i < 2 ? "1px solid rgba(255,255,255,0.08)" : "none" }}
-            >
-              <p className="text-xs font-medium mb-1" style={{ color: "rgba(255,255,255,0.45)" }}>
-                {stat.label}
-              </p>
-              <p
-                className="font-bold"
-                style={{
-                  fontSize: 28,
-                  color: stat.highlight ? "#93c5fd" : "white",
-                  lineHeight: 1,
-                }}
-              >
+            <div key={stat.label} className="px-6 py-5"
+              style={{ borderRight: i < 2 ? "1px solid rgba(255,255,255,0.08)" : "none" }}>
+              <p className="text-xs font-medium mb-1" style={{ color: "rgba(255,255,255,0.45)" }}>{stat.label}</p>
+              <p className="font-bold" style={{ fontSize: 28, color: stat.highlight ? "#93c5fd" : "white", lineHeight: 1 }}>
                 {stat.value}
               </p>
-              <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-                {stat.sub}
-              </p>
+              <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>{stat.sub}</p>
             </div>
           ))}
         </div>
 
-        {/* ── FILTER TABS ── */}
+        {/* FILTER TABS */}
         <div className="flex flex-wrap gap-2 mb-8">
           {(["all", "today", "upcoming", "done"] as FilterType[]).map((f) => (
-            <button
-              key={f}
-              className={`cs-filter-btn ${filter === f ? "active" : ""}`}
-              onClick={() => setFilter(f)}
-            >
+            <button key={f} className={`cs-filter-btn ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
               {f === "all" && `All (${schedule.length})`}
               {f === "today" && `Today (${todayCount})`}
               {f === "upcoming" && `Upcoming (${upcomingCount})`}
@@ -223,11 +245,11 @@ export default function CleanerSchedulePage() {
           ))}
         </div>
 
-        {/* ── CARDS ── */}
+        {/* CARDS */}
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">📭</p>
-            <p className="font-medium text-gray-400">Tidak ada jadwal untuk filter ini</p>
+            <p className="font-medium text-gray-400">Tidak ada jadwal</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -235,6 +257,7 @@ export default function CleanerSchedulePage() {
               const isToday = dayjs(booking.Date).isSame(dayjs(), "day");
               const isPast = dayjs(booking.Date).isBefore(dayjs(), "day");
               const dateFormatted = dayjs(booking.Date).format("ddd, D MMM YYYY");
+              const badge = statusBadge[booking.Status] || { bg: "#e2e8f0", color: "#64748b", label: booking.Status.toUpperCase() };
 
               return (
                 <div
@@ -243,90 +266,53 @@ export default function CleanerSchedulePage() {
                   className={`cs-card rounded-2xl overflow-hidden ${isToday ? "cs-today-pulse" : ""}`}
                   style={{
                     background: "white",
-                    border: isToday
-                      ? "2px solid #2563eb"
-                      : isPast
-                      ? "1px solid #e2e8f0"
-                      : "1px solid #e2e8f0",
-                    opacity: isPast ? undefined : 1,
+                    border: isToday ? "2px solid #2563eb" : "1px solid #e2e8f0",
                   }}
                 >
-                  {/* ── Card top bar ── */}
-                  <div
-                    className="px-5 py-4 flex items-center justify-between"
+                  {/* Card top bar */}
+                  <div className="px-5 py-4 flex items-center justify-between"
                     style={{
-                      background: isPast
-                        ? "#f8fafc"
-                        : isToday
+                      background: isPast ? "#f8fafc" : isToday
                         ? "linear-gradient(135deg, #1e40af, #2563eb)"
                         : "linear-gradient(135deg, #eff6ff, #dbeafe)",
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div
-                        className="cs-icon w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg select-none"
+                      <div className="cs-icon w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg select-none"
                         style={{
-                          background: isPast
-                            ? "#e2e8f0"
-                            : isToday
-                            ? "rgba(255,255,255,0.15)"
-                            : "rgba(37,99,235,0.1)",
+                          background: isPast ? "#e2e8f0" : isToday ? "rgba(255,255,255,0.15)" : "rgba(37,99,235,0.1)",
                           color: isPast ? "#94a3b8" : isToday ? "white" : "#2563eb",
                           fontFamily: "monospace",
                         }}
-                      >
-                        ◈
-                      </div>
-                      <div>
-                        <p
-                          className="font-bold text-sm leading-tight"
-                          style={{
-                            color: isPast ? "#64748b" : isToday ? "white" : "#1e3a5f",
-                          }}
-                        >
-                          {booking.Service?.Name || "Unknown Service"}
-                        </p>
-                      </div>
+                      >◈</div>
+                      <p className="font-bold text-sm leading-tight"
+                        style={{ color: isPast ? "#64748b" : isToday ? "white" : "#1e3a5f" }}>
+                        {booking.Service?.Name || "Unknown Service"}
+                      </p>
                     </div>
 
                     {/* Status badge */}
-                    <div
-                      className="text-xs font-bold px-3 py-1 rounded-full"
-                      style={{
-                        background: isPast
-                          ? "#e2e8f0"
-                          : isToday
-                          ? "rgba(255,255,255,0.2)"
-                          : "rgba(37,99,235,0.12)",
-                        color: isPast ? "#64748b" : isToday ? "white" : "#2563eb",
-                      }}
-                    >
-                      {isToday ? "TODAY" : isPast ? "DONE" : "UPCOMING"}
+                    <div className="text-xs font-bold px-3 py-1 rounded-full"
+                      style={{ background: badge.bg, color: badge.color }}>
+                      {badge.label}
                     </div>
                   </div>
 
-                  {/* ── Card body ── */}
+                  {/* Card body */}
                   <div className="px-5 py-4 space-y-3">
-                    {/* Customer */}
                     <div className="flex items-start gap-3">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-blue-50">
                         <UserOutlined style={{ fontSize: 11, color: "#2563eb" }} />
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-blue-600">Customer</p>
-                        <p className="text-sm font-medium text-gray-800">
-                          {booking.User?.username || "—"}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {booking.User?.email || "—"}
-                        </p>
+                        <p className="text-sm font-medium text-gray-800">{booking.User?.username || "—"}</p>
+                        <p className="text-xs text-gray-400">{booking.User?.email || "—"}</p>
                       </div>
                     </div>
 
-                    {/* Divider */}
                     <div className="border-t border-gray-100" />
 
-                    {/* Date & Time */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex items-center gap-2">
                         <CalendarOutlined style={{ color: "#2563eb", fontSize: 13 }} />
@@ -344,7 +330,6 @@ export default function CleanerSchedulePage() {
                       </div>
                     </div>
 
-                    {/* Address */}
                     <div className="flex items-start gap-2">
                       <EnvironmentOutlined style={{ color: "#2563eb", fontSize: 13, marginTop: 3 }} />
                       <div>
@@ -352,6 +337,61 @@ export default function CleanerSchedulePage() {
                         <p className="text-sm text-gray-600">{booking.Address || "—"}</p>
                       </div>
                     </div>
+
+                    {/* ── ACTION BUTTONS ── */}
+                    {booking.Status === "approved" && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <button
+                          onClick={() => handleStart(booking.ID)}
+                          disabled={startingId === booking.ID}
+                          className="w-full py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+                          style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}
+                        >
+                          <PlayCircleOutlined />
+                          {startingId === booking.ID ? "Memulai..." : "Mulai Kerja"}
+                        </button>
+                      </div>
+                    )}
+
+                    {booking.Status === "on_progress" && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <button
+                          onClick={() => openSubmitModal(booking.ID)}
+                          className="w-full py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+                          style={{ background: "#2563eb", color: "white", border: "none" }}
+                        >
+                          <CheckOutlined />
+                          Submit Selesai
+                        </button>
+                      </div>
+                    )}
+
+                    {booking.Status === "awaiting_approval" && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <div className="w-full py-2 rounded-xl text-sm font-semibold text-center"
+                          style={{ background: "#fef9c3", color: "#a16207" }}>
+                          ⏳ Menunggu konfirmasi customer...
+                        </div>
+                      </div>
+                    )}
+
+                    {booking.Status === "complained" && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <div className="w-full py-2 rounded-xl text-sm font-semibold text-center"
+                          style={{ background: "#fee2e2", color: "#b91c1c" }}>
+                          ⚠️ Dikomplain — menunggu keputusan admin
+                        </div>
+                      </div>
+                    )}
+
+                    {booking.Status === "done" && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <div className="w-full py-2 rounded-xl text-sm font-semibold text-center"
+                          style={{ background: "#dcfce7", color: "#15803d" }}>
+                          ✓ Pekerjaan selesai
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -359,6 +399,37 @@ export default function CleanerSchedulePage() {
           </div>
         )}
       </div>
+
+      {/* SUBMIT DONE */}
+      <Modal
+        title={<span className="font-bold text-gray-800">Submit Pekerjaan Selesai</span>}
+        open={submitModalOpen}
+        onCancel={() => setSubmitModalOpen(false)}
+        onOk={handleSubmitDone}
+        okText="Submit"
+        cancelText="Batal"
+        confirmLoading={submitting}
+        okButtonProps={{ style: { background: "#2563eb", borderColor: "#2563eb" } }}
+      >
+        <p className="text-gray-500 text-sm mb-4">
+          Upload foto bukti pekerjaan selesai (opsional). Customer akan diminta untuk konfirmasi.
+        </p>
+        <Upload
+          listType="picture-card"
+          fileList={fileList}
+          maxCount={1}
+          beforeUpload={() => false}
+          onChange={({ fileList: newList }) => setFileList(newList)}
+          accept="image/*"
+        >
+          {fileList.length === 0 && (
+            <div>
+              <UploadOutlined />
+              <div className="mt-2 text-xs">Upload Foto</div>
+            </div>
+          )}
+        </Upload>
+      </Modal>
     </div>
   );
 }

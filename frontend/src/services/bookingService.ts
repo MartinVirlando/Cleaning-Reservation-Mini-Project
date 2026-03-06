@@ -10,6 +10,7 @@ export type Booking = {
   address?: string;
   paymentStatus: string;
   snapToken?: string;
+  completionImage?: string;
 
 
   service?: {
@@ -37,6 +38,8 @@ type BookingApi = {
   Address?: string;
   PaymentStatus?: string;
   SnapToken?: string;
+  CompletionImage?: string;
+
 
 
   Service?: {
@@ -65,6 +68,7 @@ function mapBooking(b: BookingApi): Booking {
     address: b.Address,
     paymentStatus: b.PaymentStatus ?? "unpaid",
     snapToken: b.SnapToken,
+    completionImage: b.CompletionImage,
 
 
     service: b.Service

@@ -53,6 +53,7 @@ func main() {
 	adminServiceHandler := handlers.NewAdminServiceHandler(serviceService)
 
 	bookingRepo := repositories.NewBookingRepository(db)
+	completionHandler := handlers.NewCompletionHandler(bookingRepo)
 
 	bookingService := services.NewBookingService(bookingRepo, serviceRepo)
 	bookingHandler := handlers.NewBookingHandler(bookingService)
@@ -72,6 +73,7 @@ func main() {
 			"port":   cfg.AppPort,
 		})
 	})
+	e.Static("/uploads", "uploads")
 
 	// SERVICES PUBLIC
 	e.GET("/api/services", serviceHandler.GetAll)
@@ -88,6 +90,10 @@ func main() {
 	api.POST("/bookings", bookingHandler.Create)
 	api.GET("/bookings", bookingHandler.MyBookings)
 	api.PUT("/bookings/:id/cancel", bookingHandler.Cancel)
+
+	api.PUT("/bookings/:id/approve-done", completionHandler.UserApproveDone)
+	api.PUT("/bookings/:id/complain", completionHandler.UserComplain)
+
 
 	api.POST("/bookings/:id/pay", paymentHandler.CreateSnapToken)
 	e.POST("/payment/webhook", paymentHandler.HandleWebhook)
@@ -110,10 +116,16 @@ func main() {
 	admin.POST("/cleaners", adminCleanerHandler.Create)
 	admin.DELETE("/cleaners/:id", adminCleanerHandler.Delete)
 
+	admin.PUT("/bookings/:id/resolve", completionHandler.AdminResolve)
+
 	// CLEANER ROUTES
 	cleaner := api.Group("/cleaner")
 	cleaner.Use(middleware.CleanerOnly)
 	cleaner.GET("/schedule", cleanerHandler.GetSchedule)
+
+	cleaner.PUT("/bookings/:id/start", completionHandler.StartJob)
+	cleaner.PUT("/bookings/:id/submit", completionHandler.SubmitDone)
+
 
 	log.Printf("Server running at: http://localhost:%s\n", cfg.AppPort)
 	e.Logger.Fatal(e.Start(":" + cfg.AppPort))

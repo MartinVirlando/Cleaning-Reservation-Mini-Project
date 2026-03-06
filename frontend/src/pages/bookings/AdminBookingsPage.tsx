@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Button, Space, message, Modal, Select, Popconfirm} from "antd";
 import { useAuth } from "../../context/AuthContext";
 import { CheckCircleOutlined, CloseCircleOutlined, UserOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { body } from "framer-motion/client";
 
 type Booking = {
   ID: number;
@@ -13,6 +14,8 @@ type Booking = {
   Status: string;
   PaymentStatus: string;
   Cleaner?: { ID: number; username: string };
+  CompletionImage?: string;
+  ComplainNote?: string;
 };
 
 type Cleaner = {
@@ -32,6 +35,35 @@ export default function AdminBookingsPage() {
   const [filterUser, setFilterUser] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const { token } = useAuth();
+
+  const [resolveModalOpen, setResolveModalOpen] = useState(false);
+  const [resolveTargetId, setResolveTargetId] = useState<number | null>(null);
+  const [resolveLoading, setResolveLoading] = useState(false);
+  const [resolveBooking, setResolveBooking] = useState<Booking | null>(null);
+
+  const handleResolve = async (action: "approve" | "reject") => {
+    try {
+      setResolveLoading(true);
+      const res = await fetch(
+        `http://localhost:8080/api/admin/bookings/${resolveTargetId}/resolve`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        }
+      );
+      if (!res.ok) throw new Error();
+      message.success(action === "approve" ? "Booking di-approve sebagai done" : "Cleaner diminta kerja ulang");
+      setResolveModalOpen(false);
+      fetchBookings();
+    } catch {
+      message.error("Gagal resolve komplain");
+    } finally {
+      setResolveLoading(false);
+    }
+  };
+
+
 
   const fetchBookings = async () => {
     try {
@@ -178,6 +210,10 @@ export default function AdminBookingsPage() {
           rejected: { color: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
           pending: { color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
           canceled: { color: "text-gray-500", bg: "bg-gray-50", border: "border-gray-200" },
+          on_progress:       { color: "text-blue-600",    bg: "bg-blue-50",    border: "border-blue-200" },
+          awaiting_approval: { color: "text-yellow-700",  bg: "bg-yellow-50",  border: "border-yellow-200" },
+          complained:        { color: "text-red-700",     bg: "bg-red-50",     border: "border-red-300" },
+          done:              { color: "text-green-700",   bg: "bg-green-50",   border: "border-green-200" },
         };
         const c = config[status] || config.pending;
         return <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${c.color} ${c.bg} border ${c.border}`}>{status.toUpperCase()}</span>;
@@ -209,6 +245,22 @@ export default function AdminBookingsPage() {
               Reject
             </Button>
           </Popconfirm>
+
+          {record.Status === "complained" && (
+            <Button
+              size="small"
+              className="!rounded-lg !text-xs !font-semibold"
+              style={{ borderColor: "#f59e0b", color: "#f59e0b" }}
+              onClick={() => {
+                setResolveTargetId(record.ID);
+                setResolveBooking(record);
+                setResolveModalOpen(true);
+              }}
+            >
+              Resolve
+            </Button>
+          )}
+
         </Space>
       ),
     },
@@ -302,6 +354,70 @@ export default function AdminBookingsPage() {
           value={selectedCleanerId}
           options={cleaners.map((c) => ({ value: c.id, label: `${c.username} (${c.email})` }))}
         />
+      </Modal>
+
+      <Modal
+        title={<span className="font-bold text-gray-800">Resolve Komplain</span>}
+        open={resolveModalOpen}
+        onCancel={() => setResolveModalOpen(false)}
+        footer={null}
+      >
+        {resolveBooking && (
+          <div className="space-y-4">
+
+            {/* Info booking */}
+            <div className="rounded-xl p-4 bg-gray-50 border border-gray-100 text-sm space-y-1">
+              <p><span className="text-gray-500">User:</span> <span className="font-medium">{resolveBooking.User.email}</span></p>
+              <p><span className="text-gray-500">Service:</span> <span className="font-medium">{resolveBooking.Service.Name}</span></p>
+              <p><span className="text-gray-500">Cleaner:</span> <span className="font-medium">{resolveBooking.Cleaner?.username || "-"}</span></p>
+            </div>
+
+            {/* ── Foto dari cleaner ── */}
+            {resolveBooking.CompletionImage ? (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2">Foto bukti dari cleaner:</p>
+                <img
+                  src={`http://localhost:8080${resolveBooking.CompletionImage}`}
+                  alt="Bukti pekerjaan"
+                  className="w-full rounded-xl object-cover max-h-56 border border-gray-100"
+                />
+              </div>
+            ) : (
+              <div className="rounded-xl p-3 bg-gray-50 border border-gray-100 text-sm text-gray-400 text-center">
+                Tidak ada foto dari cleaner
+              </div>
+            )}
+
+            {/* ── Alasan komplain dari user ── */}
+            {resolveBooking.ComplainNote && (
+              <div className="rounded-xl p-4 bg-red-50 border border-red-100">
+                <p className="text-xs font-semibold text-red-500 mb-1">Alasan komplain user:</p>
+                <p className="text-sm text-red-700">{resolveBooking.ComplainNote}</p>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-500">Tinjau hasil kerja cleaner dan putuskan:</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => handleResolve("reject")}
+                disabled={resolveLoading}
+                className="py-3 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca" }}
+              >
+                ✗ Tolak — Suruh Ulang
+              </button>
+              <button
+                onClick={() => handleResolve("approve")}
+                disabled={resolveLoading}
+                className="py-3 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: "#2563eb", color: "white", border: "none" }}
+              >
+                ✓ Override Done
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

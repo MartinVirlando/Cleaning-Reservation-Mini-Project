@@ -19,6 +19,9 @@ type BookingRepository interface {
 	UpdatePaymentToken(id uint, token string, orderID string) error
 	UpdatePaymentStatus(id uint, status string) error
 	FindByOrderID(orderID string) (*models.Booking, error)
+	SubmitCompletion(id uint, imagePath string) error
+	SubmitComplain(id uint, note string) error
+	ResolveComplain(id uint, newStatus string) error
 }
 
 type bookingRepository struct {
@@ -56,6 +59,8 @@ func (r *bookingRepository) FindByID(id uint) (*models.Booking, error) {
 			return  db.Unscoped()
 		}).
 		Preload("User").
+
+		
 		First(&booking, id).Error
 
 	if err != nil {
@@ -131,4 +136,35 @@ func (r *bookingRepository) FindByOrderID(orderID string) (*models.Booking, erro
 	var booking models.Booking
 	err := r.db.Where("midtrans_order_id = ?", orderID).First(&booking).Error
 	return &booking, err
+}
+
+func (r *bookingRepository) SubmitCompletion(id uint, imagePath string) error{
+	return r.db.Model(&models.Booking{}).
+	Where("id = ?", id).
+	Updates(map[string]interface{}{
+		"status": "awaiting_approval",
+		"completion_image": imagePath,
+	}).Error
+}
+
+func (r *bookingRepository) SubmitComplain(id uint, note string) error {
+	return r.db.Model(&models.Booking{}).
+	Where("id = ?", id).
+	Updates(map[string]interface{}{
+		"status": "complained",
+		"complain_note": note,
+	}).Error
+}
+
+func (r *bookingRepository) ResolveComplain(id uint, newStatus string) error {
+	updates := map[string]interface{}{
+		"status": newStatus,
+	}
+
+	if newStatus == "done" {
+		updates["complain_note"] = ""
+	}
+	return r.db.Model(&models.Booking{}).
+	Where("id = ?", id).
+	Updates(updates).Error
 }

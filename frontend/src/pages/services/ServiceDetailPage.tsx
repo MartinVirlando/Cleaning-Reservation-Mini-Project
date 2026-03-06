@@ -3,6 +3,7 @@ import { Alert, Form, DatePicker, TimePicker, message } from "antd";
 import { useServiceDetailQuery } from "../../services/queries/useServiceDetailQuery";
 import { createBooking } from "../../services/bookingService";
 import dayjs from "dayjs";
+import { useAuth } from "../../context/AuthContext";
 import type { AxiosError } from "axios";
 import Input from "../../components/atoms/Input";
 import { useEffect, useRef } from "react";
@@ -21,9 +22,8 @@ function getServiceIcon(name: string): string {
 const disabledDate = (current: dayjs.Dayjs) => {
   if (!current) return false;
   const day = current.day(); 
-  const isSunday = day === 0;
   const isPastOrToday = current.isBefore(dayjs().add(1, "day"), "day");
-  return isSunday || isPastOrToday;
+  return isPastOrToday;
 };
 
 const disabledTime = () => ({
@@ -45,6 +45,8 @@ export default function ServiceDetailPage() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const pageRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated } = useAuth();
+
 
   const { data, isLoading, isError } = useServiceDetailQuery(id || "");
 
@@ -283,6 +285,11 @@ export default function ServiceDetailPage() {
                 form={form}
                 layout="vertical"
                 onFinish={async (values) => {
+                  if (!isAuthenticated){
+                    message.warning("Please login first before book a service!");
+                    navigate("/login");
+                    return;
+                  }
                   try {
                     await createBooking({
                       serviceId: Number(id),

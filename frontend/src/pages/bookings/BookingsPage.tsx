@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, Spin, Alert, Empty, Tag, Calendar, Badge, message, Popconfirm } from "antd";
+import { Card, Spin, Alert, Empty, Tag, Calendar, Badge, message, Popconfirm, Modal } from "antd";
 import { useBookingsQuery } from "../../services/queries/useBookingsQuery";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/atoms/Buttons";
@@ -19,6 +19,12 @@ export default function BookingsPage() {
   const { token } = useAuth();
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [payingId, setPayingId] = useState<number | null>(null);
+
+  const [complainModalOpen, setComplainModalOpen] = useState(false);
+  const [complainTargetId, setComplainTargetId] = useState<number | null>(null);
+  const [complainNote, setComplainNote] = useState("");
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [complainLoading, setComplainLoading] = useState(false);
 
   // Buat Handle pay
   const handlePay = async (bookingId: number) => {
@@ -68,6 +74,46 @@ export default function BookingsPage() {
       message.error("Gagal cancel booking");
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleApproveDone = async (bookingId: number) => {
+    try{
+      setApprovingId(bookingId);
+      const res = await fetch(
+        `http://localhost:8080/api/bookings/${bookingId}/approve-done`,
+        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.ok) throw new Error();
+      message.success("Terima kasih! Booking telah selesai");
+      window.location.reload();
+    }catch{
+      message.error("Gagal Konfirmasi");
+    }finally {
+      setApprovingId(null);
+    }
+  };
+
+  const handleComplain = async () => {
+    if(!complainNote.trim()) {message.warning("Tulis alasan komplain"); return;}
+    try{
+      setComplainLoading(true);
+      const res = await fetch(
+        `http://localhost:8080/api/bookings/${complainTargetId}/complain`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ note: complainNote }),
+        }
+      );
+      if(!res.ok) throw new Error();
+      message.success("Komplain telah dikirim");
+      setComplainModalOpen(false);
+      window.location.reload();
+    }catch{
+      message.error("Gagal mengirim komplain");
+    }finally {
+      setComplainLoading(false);
     }
   };
 
@@ -151,8 +197,8 @@ export default function BookingsPage() {
   const displayedBookings = (selectedDate ? getBookingsForDate(selectedDate) : data)
     .slice()
     .sort((a, b) => {
-      const aIsPast = dayjs(`${a.date} ${a.time}`).isBefore(dayjs());
-      const bIsPast = dayjs(`${b.date} ${b.time}`).isBefore(dayjs());
+      const aIsPast = a.status === "done";
+      const bIsPast = b.status === "done";
       if (aIsPast === bIsPast) return 0;
       return aIsPast ? 1 : -1;
     });
@@ -219,7 +265,7 @@ export default function BookingsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {displayedBookings.map((booking) => {
-              const isPast = dayjs(`${booking.date} ${booking.time}`).isBefore(dayjs());
+              const isPast = booking.status === "done";
               const isToday = dayjs(booking.date).isSame(dayjs(), "day") && !isPast;
 
               return (
@@ -238,7 +284,7 @@ export default function BookingsPage() {
                       </span>
                       <div className="flex gap-2">
                         {isToday && <Tag color="blue">Today</Tag>}
-                        {isPast && <Tag color="default">Done</Tag>}
+                        {booking.status === "done" && <Tag color="green">Done</Tag>}
                         <Tag
                             color={
                               booking.status === "approved"
@@ -348,13 +394,70 @@ export default function BookingsPage() {
                         Bayar Sekarang
                         </Button>
                       </div>
-                    )}
+                    )
+                  }
 
-                    {booking.paymentStatus === "paid" && (
+                  {/* Awaiting approval — user perlu konfirmasi */}
+                  {booking.status === "awaiting_approval" && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+
+                      {/* Foto dari cleaner */}
+                      {booking.completionImage && (
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-500 font-semibold mb-1">Foto bukti dari cleaner:</p>
+                          <img
+                            src={`http://localhost:8080${booking.completionImage}`}
+                            alt="Bukti pekerjaan"
+                            className="w-full rounded-xl object-cover max-h-48 border border-gray-100"
+                          />
+                        </div>
+                      )}
+
+                      <p className="text-xs text-gray-500 text-center mb-2">
+                        Cleaner telah menyelesaikan pekerjaan. Apakah sudah bersih?
+                      </p>
+                      <Button
+                        type="primary"
+                        size="small"
+                        loading={approvingId === booking.id}
+                        onClick={() => handleApproveDone(booking.id)}
+                        className="w-full"
+                        style={{ backgroundColor: "#16a34a", borderColor: "#16a34a" }}
+                      >
+                        ✓ Konfirmasi Selesai
+                      </Button>
+                      <Button
+                        danger
+                        size="small"
+                        className="w-full"
+                        onClick={() => {
+                          setComplainTargetId(booking.id);
+                          setComplainNote("");
+                          setComplainModalOpen(true);
+                        }}
+                      >
+                        ✗ Komplain
+                      </Button>
+                    </div>
+                  )}
+
+                  {booking.status === "complained" && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 text-center">
+                      <Tag color="red">Komplain sedang ditinjau admin</Tag>
+                    </div>
+                  )}
+
+                  {booking.status === "done" && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 text-center">
+                      <Tag color="green">✓ Selesai</Tag>
+                    </div>
+                  )}
+
+                  {booking.paymentStatus === "paid" && (
                       <div className="mt-3 pt-3 border-t border-gray-100 text-center">
                           <Tag color="green">Lunas</Tag>
                       </div>
-                    )}
+                  )}
 
                 </Card>
               );
@@ -362,6 +465,29 @@ export default function BookingsPage() {
           </div>
         )}
       </div>
+
+      <Modal
+        title="Ajukan Komplain"
+        open={complainModalOpen}
+        onCancel={() => setComplainModalOpen(false)}
+        onOk={handleComplain}
+        okText="Kirim Komplain"
+        cancelText="Batal"
+        confirmLoading={complainLoading}
+        okButtonProps={{ danger: true }}
+      >
+        <p className="text-gray-500 text-sm mb-3">
+          Jelaskan kenapa kamu tidak puas dengan hasil kerja cleaner:
+        </p>
+        <textarea
+          className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:border-blue-400"
+          rows={4}
+          placeholder="Contoh: Lantai masih kotor di bagian dapur..."
+          value={complainNote}
+          onChange={(e) => setComplainNote(e.target.value)}
+        />
+      </Modal>
+
     </div>
   );
 }

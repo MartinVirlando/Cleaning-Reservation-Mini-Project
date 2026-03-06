@@ -80,41 +80,6 @@ export default function HomePage() {
         <div className="relative z-10 w-full bg-white shadow-2xl px-6 py-5">
           <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-stretch md:items-center gap-3">
 
-            {/* Field 1: Layanan */}
-            <div className="flex-1 border-r border-gray-200 px-4">
-              <p className="text-xs text-gray-400 uppercase font-semibold tracking-wider mb-1">LAYANAN</p>
-              <input
-                className="w-full outline-none text-gray-700 placeholder-gray-400 text-sm bg-transparent"
-                placeholder="Cari layanan cleaning..."
-              />
-            </div>
-
-            {/* Field 2: Tanggal */}
-            <div className="flex-1 border-r border-gray-200 px-4">
-              <p className="text-xs text-gray-400 uppercase font-semibold tracking-wider mb-1">TANGGAL</p>
-              <input
-                type="date"
-                className="w-full outline-none text-gray-700 text-sm bg-transparent"
-              />
-            </div>
-
-            {/* Field 3: Lokasi */}
-            <div className="flex-1 px-4">
-              <p className="text-xs text-gray-400 uppercase font-semibold tracking-wider mb-1">LOKASI</p>
-              <input
-                className="w-full outline-none text-gray-700 placeholder-gray-400 text-sm bg-transparent"
-                placeholder="Masukkan kota / area..."
-              />
-            </div>
-
-            {/* Tombol Search */}
-            <button
-              onClick={handleBookNow}
-              className="bg-blue-900 text-white font-bold px-8 py-3 rounded-lg hover:bg-blue-800 transition-all whitespace-nowrap"
-            >
-              Cari Layanan
-            </button>
-
           </div>
         </div>
 
