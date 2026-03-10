@@ -1,9 +1,8 @@
-import { Layout, Menu, Dropdown } from "antd";
+import { Layout, Dropdown } from "antd";
 import { Outlet, useNavigate } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { useAuth } from "../context/AuthContext";
 import {
-  CalendarOutlined,
   KeyOutlined,
   LogoutOutlined,
   UserOutlined,
@@ -42,21 +41,7 @@ export default function CleanerLayout() {
           </h1>
 
           <div className="flex items-center gap-4">
-            <Menu
-              theme="dark"
-              mode="horizontal"
-              style={{ background: "#1e3a5f" }}
-              selectable={false}
-              items={[
-                {
-                  key: "schedule",
-                  label: "My Schedule",
-                  icon: <CalendarOutlined />,
-                  onClick: () => navigate("/cleaner/schedule"),
-                },
-              ]}
-            />
-
+           
             <Dropdown
               menu={{ items: profileMenuItems }}
               trigger={["click"]}

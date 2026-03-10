@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Table, Button, Space, message, Modal, Select, Popconfirm} from "antd";
 import { useAuth } from "../../context/AuthContext";
 import { CheckCircleOutlined, CloseCircleOutlined, UserOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined } from "@ant-design/icons";
-import { body } from "framer-motion/client";
 
 type Booking = {
   ID: number;
@@ -16,6 +15,7 @@ type Booking = {
   Cleaner?: { ID: number; username: string };
   CompletionImage?: string;
   ComplainNote?: string;
+  Rating?: { Stars: number; Comment: string };
 };
 
 type Cleaner = {
@@ -40,6 +40,8 @@ export default function AdminBookingsPage() {
   const [resolveTargetId, setResolveTargetId] = useState<number | null>(null);
   const [resolveLoading, setResolveLoading] = useState(false);
   const [resolveBooking, setResolveBooking] = useState<Booking | null>(null);
+
+  const [ratingPopup, setRatingPopup] = useState<{Stars: number; Comment: string} |null>(null);
 
   const handleResolve = async (action: "approve" | "reject") => {
     try {
@@ -66,19 +68,38 @@ export default function AdminBookingsPage() {
 
 
   const fetchBookings = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("http://localhost:8080/api/admin/bookings", {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error();
-      setBookings(await res.json());
-    } catch {
-      message.error("Gagal ambil data booking");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const res = await fetch("http://localhost:8080/api/admin/bookings", {
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error();
+    const bookingsData: Booking[] = await res.json();
+
+    // Fetch rating 
+    const withRatings = await Promise.all(
+      bookingsData.map(async (b) => {
+        if (b.Status !== "done") return b;
+        try {
+          const rRes = await fetch(`http://localhost:8080/api/bookings/${b.ID}/rating`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (rRes.ok) {
+            const rating = await rRes.json();
+            return { ...b, Rating: rating };
+          }
+        } catch {}
+        return b;
+      })
+    );
+
+    setBookings(withRatings);
+  } catch {
+    message.error("Gagal ambil data booking");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchCleaners = async () => {
     try {
@@ -220,6 +241,28 @@ export default function AdminBookingsPage() {
       },
     },
     {
+      title: "Rating",
+      render: (_: any, record: Booking) => {
+        if (record.Status !== "done") return <span className="text-gray-300 text-sm">-</span>;
+        if (!record.Rating) return <span className="text-gray-400 text-xs">Belum dirating</span>;
+        return (
+          <div
+            className="cursor-pointer hover:opacity-70 transition-opacity"
+            onClick={() => setRatingPopup(record.Rating!)}
+          >
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map(star => (
+                <span key={star} style={{ color: star <= record.Rating!.Stars ? "#f59e0b" : "#d1d5db", fontSize: 14 }}>★</span>
+              ))}
+            </div>
+            {record.Rating.Comment && (
+              <p className="text-xs text-gray-400 mt-0.5 max-w-[120px] truncate">"{record.Rating.Comment}"</p>
+            )}
+          </div>
+        );
+      }
+    },
+    {
       title: "Action",
       render: (_: any, record: Booking) => (
         <Space size={8}>
@@ -318,6 +361,10 @@ export default function AdminBookingsPage() {
                 { value: "approved", label: "Approved" },
                 { value: "rejected", label: "Rejected" },
                 { value: "canceled", label: "Canceled" },
+                { value: "on_progress", label: "On Progress" },      
+                { value: "awaiting_approval", label: "Awaiting Approval" }, 
+                { value: "complained", label: "Complained" },        
+                { value: "done", label: "Done" },  
               ]}
             />
           </div>
@@ -419,6 +466,41 @@ export default function AdminBookingsPage() {
           </div>
         )}
       </Modal>
+
+      <Modal
+      title={<span className="font-bold text-gray-800">Detail Rating</span>}
+      open={!!ratingPopup}
+      onCancel={() => setRatingPopup(null)}
+      footer={null}
+      width={360}
+    >
+      {ratingPopup && (
+        <div className="py-4 space-y-4 text-center">
+        
+          <div className="flex justify-center gap-1">
+            {[1,2,3,4,5].map(star => (
+              <span key={star} style={{ color: star <= ratingPopup.Stars ? "#f59e0b" : "#d1d5db", fontSize: 32 }}>★</span>
+            ))}
+          </div>
+
+          {/* Label */}
+          <p className="text-sm font-semibold text-gray-700">
+            {["", "Sangat Buruk", "Buruk", "Cukup", "Bagus", "Sangat Bagus"][ratingPopup.Stars]}
+          </p>
+
+          {/* Komentar */}
+          {ratingPopup.Comment ? (
+            <div className="rounded-xl p-4 bg-amber-50 border border-amber-100 text-left">
+              <p className="text-xs font-semibold text-amber-600 mb-1">Komentar:</p>
+              <p className="text-sm text-gray-700">{ratingPopup.Comment}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">Tidak ada komentar</p>
+          )}
+        </div>
+      )}
+    </Modal>
+    
     </div>
   );
 }

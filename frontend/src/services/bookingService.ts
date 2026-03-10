@@ -11,6 +11,8 @@ export type Booking = {
   paymentStatus: string;
   snapToken?: string;
   completionImage?: string;
+  hasRating?: boolean;
+
 
 
   service?: {

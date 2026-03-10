@@ -62,6 +62,9 @@ func main() {
 
 	paymentHandler := handlers.NewPaymentHandler(bookingRepo, cfg)
 
+	ratingRepo := repositories.NewRatingRepository(db)
+	ratingHandler := handlers.NewRatingHandler(ratingRepo, bookingRepo)
+
 	// PUBLIC ROUTES (NO JWT)
 
 	e.POST("/auth/register", authHandler.Register)
@@ -94,9 +97,11 @@ func main() {
 	api.PUT("/bookings/:id/approve-done", completionHandler.UserApproveDone)
 	api.PUT("/bookings/:id/complain", completionHandler.UserComplain)
 
-
 	api.POST("/bookings/:id/pay", paymentHandler.CreateSnapToken)
 	e.POST("/payment/webhook", paymentHandler.HandleWebhook)
+
+	api.POST("/bookings/:bookingId/rating", ratingHandler.Create)
+	api.GET("/bookings/:bookingId/rating", ratingHandler.GetByBookingID)
 
 	// ADMIN ROUTES
 	admin := api.Group("/admin")
@@ -125,7 +130,6 @@ func main() {
 
 	cleaner.PUT("/bookings/:id/start", completionHandler.StartJob)
 	cleaner.PUT("/bookings/:id/submit", completionHandler.SubmitDone)
-
 
 	log.Printf("Server running at: http://localhost:%s\n", cfg.AppPort)
 	e.Logger.Fatal(e.Start(":" + cfg.AppPort))

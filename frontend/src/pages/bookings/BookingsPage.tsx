@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, Spin, Alert, Empty, Tag, Calendar, Badge, message, Popconfirm, Modal } from "antd";
 import { useBookingsQuery } from "../../services/queries/useBookingsQuery";
 import { useNavigate } from "react-router-dom";
@@ -20,11 +20,23 @@ export default function BookingsPage() {
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [payingId, setPayingId] = useState<number | null>(null);
 
+  //Approval
   const [complainModalOpen, setComplainModalOpen] = useState(false);
   const [complainTargetId, setComplainTargetId] = useState<number | null>(null);
   const [complainNote, setComplainNote] = useState("");
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [complainLoading, setComplainLoading] = useState(false);
+
+
+  //Rating
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [ratingTargetId, setRatingTargetId] = useState<number | null>(null);
+  const [ratingStars, setRatingStars] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratedBookingIds, setRatedBookingIds] = useState<number[]>([]);
+  const [bookingRatings, setBookingRatings] = useState<Record<number, { stars: number; comment: string }>>({});
+
 
   // Buat Handle pay
   const handlePay = async (bookingId: number) => {
@@ -116,6 +128,59 @@ export default function BookingsPage() {
       setComplainLoading(false);
     }
   };
+
+  const handleSubmitRating = async () => {
+    if (ratingStars === 0) { message.warning("Pilih bintang dulu"); return; }
+    try {
+      setRatingLoading(true);
+      const res = await fetch(
+        `http://localhost:8080/api/bookings/${ratingTargetId}/rating`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ stars: ratingStars, comment: ratingComment }),
+        }
+      );
+      if (!res.ok) throw new Error();
+      message.success("Terima kasih atas penilaianmu!");
+      setRatedBookingIds(prev => [...prev, ratingTargetId!]);
+      setRatingModalOpen(false);
+    } catch {
+      message.error("Gagal kirim rating");
+    } finally {
+      setRatingLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!data || !token) return;
+    const doneBookings = data.filter(b => b.status === "done");
+    Promise.all(
+      doneBookings.map(async (b) => {
+        try {
+          const res = await fetch(`http://localhost:8080/api/bookings/${b.id}/rating`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const rating = await res.json();
+            return { id: b.id, rating };
+          }
+        } catch { }
+        return null;
+      })
+    ).then(results => {
+      const ids: number[] = [];
+      const ratings: Record<number, { stars: number; comment: string }> = {};
+      results.forEach(r => {
+        if (r) {
+          ids.push(r.id);
+          ratings[r.id] = { stars: r.rating.Stars, comment: r.rating.Comment };
+        }
+      });
+      setRatedBookingIds(ids);
+      setBookingRatings(ratings);
+    });
+  }, [data, token]);
 
 
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
@@ -276,7 +341,7 @@ export default function BookingsPage() {
                   className={`shadow-md hover:shadow-xl transition-shadow duration-300 ${
                               selectedDate && dayjs(booking.date).isSame(selectedDate, "day")
                               ? "ring-2 ring-blue-400": ""} 
-                              ${isPast ? "opacity-60 bg-gray-50" : isToday ? "border-2 border-blue-400 bg-blue-50" : "bg-white"}`}
+                              ${isPast ? "bg-gray-50 border-gray-200" : isToday ? "border-2 border-blue-400 bg-blue-50" : "bg-white"}`}
                   title={
                     <div className="flex justify-between items-center">
                       <span className="font-bold">
@@ -301,6 +366,7 @@ export default function BookingsPage() {
                     </div>
                   }
                 >
+                  <div className={isPast ? "opacity-50" : ""}>
                   {/* Service Name */}
                   <div className="mb-4 pb-3 border-b border-gray-200">
                     {(booking.service as any)?.isDeleted ? (
@@ -322,22 +388,23 @@ export default function BookingsPage() {
                       </p>
                     )}
                   </div>
+                  </div>
 
                   {/* Booking Details */}
                   <div className="space-y-2 text-sm">
                     <p className="flex justify-between">
                       <span className="text-gray-500">Date:</span>
-                      <span className="font-medium">{booking.date}</span>
+                      <span className={`font-medium ${isPast ? "text-gray-400" : ""}`}>{booking.date}</span>
                     </p>
 
                     <p className="flex justify-between">
                       <span className="text-gray-500">Time:</span>
-                      <span className="font-medium">{booking.time}</span>
+                      <span className={`font-medium ${isPast ? "text-gray-400" : ""}`}>{booking.time}</span>
                     </p>
 
                     <p className="flex justify-between">
                       <span className="text-gray-500">Address:</span>
-                      <span className="font-medium text-right max-w-[60%]">
+                      <span className={`font-medium text-right max-w-[60%] ${isPast ? "text-gray-400" : ""}`}>
                         {booking.address}
                       </span>
                     </p>
@@ -448,8 +515,40 @@ export default function BookingsPage() {
                   )}
 
                   {booking.status === "done" && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 text-center">
-                      <Tag color="green">✓ Selesai</Tag>
+                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                      <div className="text-center">
+                        <Tag color="green">✓ Selesai</Tag>
+                      </div>
+
+                      {/* Tampilkan rating kalau sudah dirating */}
+                      {ratedBookingIds.includes(booking.id) && bookingRatings[booking.id] && (
+                        <div className="rounded-xl p-3 bg-amber-50 border border-amber-100 text-center">
+                          <div className="flex justify-center gap-1 mb-1">
+                            {[1,2,3,4,5].map(star => (
+                              <span key={star} style={{ color: star <= bookingRatings[booking.id].stars ? "#f59e0b" : "#d1d5db", fontSize: 18 }}>★</span>
+                            ))}
+                          </div>
+                          {bookingRatings[booking.id].comment && (
+                            <p className="text-xs text-gray-500 mt-1">"{bookingRatings[booking.id].comment}"</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Tombol rating kalau belum dirating */}
+                      {!ratedBookingIds.includes(booking.id) && (
+                        <button
+                          onClick={() => {
+                            setRatingTargetId(booking.id);
+                            setRatingStars(0);
+                            setRatingComment("");
+                            setRatingModalOpen(true);
+                          }}
+                          className="w-full py-2 rounded-xl text-sm font-semibold transition-all"
+                          style={{ background: "#fef9c3", color: "#a16207", border: "1px solid #fde68a" }}
+                        >
+                          ⭐ Beri Rating
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -486,6 +585,48 @@ export default function BookingsPage() {
           value={complainNote}
           onChange={(e) => setComplainNote(e.target.value)}
         />
+      </Modal>
+
+      <Modal
+        title={<span className="font-bold text-gray-800">Beri Rating</span>}
+        open={ratingModalOpen}
+        onCancel={() => setRatingModalOpen(false)}
+        onOk={handleSubmitRating}
+        okText="Kirim Rating"
+        cancelText="Batal"
+        confirmLoading={ratingLoading}
+        okButtonProps={{ style: { background: "#2563eb", borderColor: "#2563eb" } }}
+      >
+        <div className="space-y-4 py-2">
+          <div>
+            <p className="text-sm text-gray-500 mb-3">Seberapa puas kamu dengan layanan ini?</p>
+            {/* Star picker */}
+            <div className="flex gap-2 justify-center">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRatingStars(star)}
+                  className="text-3xl transition-transform hover:scale-110"
+                  style={{ color: star <= ratingStars ? "#f59e0b" : "#d1d5db" }}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            {ratingStars > 0 && (
+              <p className="text-center text-sm text-gray-500 mt-1">
+                {["", "Sangat Buruk", "Buruk", "Cukup", "Bagus", "Sangat Bagus"][ratingStars]}
+              </p>
+            )}
+          </div>
+          <textarea
+            className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:border-blue-400"
+            rows={3}
+            placeholder="Komentar (opsional)..."
+            value={ratingComment}
+            onChange={(e) => setRatingComment(e.target.value)}
+          />
+        </div>
       </Modal>
 
     </div>
