@@ -6,6 +6,7 @@ type AuthUser = {
   name: string;
   email: string;
   role: string;
+  phone?: string;
 };
 
 type AuthContextType = {

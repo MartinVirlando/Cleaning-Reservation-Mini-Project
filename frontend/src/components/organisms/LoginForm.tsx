@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 type LoginFormValues = {
   email: string;
   password: string;
+  
 };
 
 export default function LoginForm() {
@@ -24,6 +25,7 @@ export default function LoginForm() {
           name: data.user.username,
           email: data.user.email,
           role: data.user.role,
+          phone: data.user.phone,
         };
         console.log("LOGIN ROLE =", data.user.role);
 

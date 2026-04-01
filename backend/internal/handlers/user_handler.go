@@ -33,6 +33,7 @@ func (h *UserHandler) Profile(c echo.Context) error {
 		"id":       user.ID,
 		"username": user.Username,
 		"email":    user.Email,
+		"phone":    user.Phone,
 		"role":     user.Role,
 	})
 }
@@ -43,6 +44,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 	type UpdateProfileRequest struct {
 		Username string `json:"username"`
 		Email    string `json:"email"`
+		Phone    string `json:"phone"`
 	}
 
 	var req UpdateProfileRequest
@@ -77,9 +79,9 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 		})
 	}
 
-	// Update field
 	user.Username = req.Username
 	user.Email = req.Email
+	user.Phone = req.Phone
 
 	if err := h.db.Save(&user).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -101,6 +103,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 			"id":       user.ID,
 			"username": user.Username,
 			"email":    user.Email,
+			"phone":    user.Phone,
 			"role":     user.Role,
 		},
 	})

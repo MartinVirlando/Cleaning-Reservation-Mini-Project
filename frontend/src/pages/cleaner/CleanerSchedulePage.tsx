@@ -19,7 +19,7 @@ type ScheduleBooking = {
   Time: string;
   Address: string;
   Status: string;
-  User: { username: string; email: string };
+  User: { username: string; email: string; phone?: string};
   Service: { Name: string };
 };
 
@@ -308,6 +308,9 @@ export default function CleanerSchedulePage() {
                         <p className="text-xs font-semibold text-blue-600">Customer</p>
                         <p className="text-sm font-medium text-gray-800">{booking.User?.username || "—"}</p>
                         <p className="text-xs text-gray-400">{booking.User?.email || "—"}</p>
+                        {booking.User?.phone && (
+                          <p className="text-xs text-gray-400">📞 {booking.User.phone}</p>
+                        )}
                       </div>
                     </div>
 

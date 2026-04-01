@@ -28,7 +28,7 @@ function DefaultRedirect() {
   const { user } = useAuth();
   if (user?.role === "admin") return <Navigate to="/admin/services" replace />;
   if (user?.role === "cleaner") return <Navigate to="/cleaner/schedule" replace />;
-  return <Navigate to="/" replace />;  // ← user biasa ke homepage
+  return <Navigate to="/" replace />;  
 }
 
 export default function AppRouter() {
@@ -42,7 +42,7 @@ export default function AppRouter() {
         <Route path="/services/:id" element={<ServiceDetailPage />} />
       </Route>
 
-      {/* AUTH */}z
+      {/* AUTH */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

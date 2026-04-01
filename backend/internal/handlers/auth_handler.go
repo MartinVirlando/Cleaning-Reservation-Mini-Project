@@ -22,6 +22,7 @@ type RegisterRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Phone    string `json:"phone"`
 }
 
 func (h *AuthHandler) Register(c echo.Context) error {
@@ -58,6 +59,7 @@ func (h *AuthHandler) Register(c echo.Context) error {
 		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
+		Phone:        req.Phone,
 		Role:         "user",
 	}
 
@@ -121,6 +123,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 			"id":       user.ID,
 			"username": user.Username,
 			"email":    user.Email,
+			"phone":    user.Phone,
 			"role":     user.Role,
 		},
 	})

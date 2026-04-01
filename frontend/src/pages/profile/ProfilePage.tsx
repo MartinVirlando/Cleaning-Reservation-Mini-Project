@@ -20,6 +20,7 @@ export default function ProfilePage() {
       form.setFieldsValue({
         username: user.name,  
         email: user.email,
+        phone: user.phone,
       });
     }
   }, [user, form]);
@@ -81,6 +82,20 @@ export default function ProfilePage() {
             <Input
               prefix={<MailOutlined />}
               placeholder="your@email.com"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Phone Number"
+            name="phone"
+            rules={[
+              { pattern: /^[0-9+\-\s]{8,15}$/, message: "Enter a valid phone number" },
+            ]}
+          >
+            <Input
+              prefix={<span>📞</span>}
+              placeholder="08123456789"
               size="large"
             />
           </Form.Item>

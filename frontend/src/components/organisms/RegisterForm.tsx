@@ -12,6 +12,7 @@ type RegisterFormValues = {
     email: string;
     password: string;
     confirmPassword: string;
+    phone : string;
 };
 
 export default function RegisterForm() {
@@ -25,6 +26,7 @@ export default function RegisterForm() {
       username: values.username,
       email: values.email,
       password: values.password,
+      phone: values.phone,
     });
 
     message.success("Register success!");
@@ -58,6 +60,15 @@ export default function RegisterForm() {
                 rules={[
                     { required: true, message: "Please input your email!" },
                     { type: "email", message: "Please enter a valid email!"}]}
+            />
+            <FormInput
+                name="phone"
+                label="Phone Number"
+                placeholder="Enter your phone number (e.g. 08123456789)"
+                rules={[
+                    { required: true, message: "Please input your phone number!" },
+                    { pattern: /^[0-9+\-\s]{8,15}$/, message: "Please enter a valid phone number!" }
+                ]}
             />
             <FormInput
                 name="password"

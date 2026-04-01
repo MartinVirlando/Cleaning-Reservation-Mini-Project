@@ -5,7 +5,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, UserOutlined, CalendarOutline
 
 type Booking = {
   ID: number;
-  User: { id: number; email: string };
+  User: { id: number; email: string; phone?: string };
   Service: { ID: number; Name: string; Price: number };
   Date: string;
   Time: string;
@@ -177,12 +177,17 @@ export default function AdminBookingsPage() {
     {
       title: "User",
       dataIndex: ["User", "email"],
-      render: (email: string) => (
+      render: (_: string, record: Booking) => (  
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
             <UserOutlined className="text-blue-600 text-xs" />
           </div>
-          <span className="text-sm font-medium text-gray-700">{email}</span>
+          <div>
+            <p className="text-sm font-medium text-gray-700">{record.User.email}</p>
+            {record.User.phone && (
+              <p className="text-xs text-gray-400">📞 {record.User.phone}</p>
+            )}
+          </div>
         </div>
       ),
     },

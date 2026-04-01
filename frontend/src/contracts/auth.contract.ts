@@ -3,6 +3,7 @@ export type AuthUser = {
     email: string;
     username: string;
     role: string;
+    phone?: string;
 };
 
 export type LoginRequest = {
